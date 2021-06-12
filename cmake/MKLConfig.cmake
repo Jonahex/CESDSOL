@@ -75,7 +75,7 @@ find_package(OpenMP QUIET)
 check_type_size("int" INT_SIZE
   BUILTIN_TYPES_ONLY LANGUAGE C)
 
-set(MKL_THREAD_LAYER "TBB" CACHE STRING "The thread layer to choose for MKL")
+set(MKL_THREAD_LAYER ${MKL_THREAD_LAYER} CACHE STRING "The thread layer to choose for MKL")
 set_property(CACHE MKL_THREAD_LAYER PROPERTY STRINGS "TBB" "GNU OpenMP" "Intel OpenMP" "Sequential")
 
 message(STATUS "MKL: Thread Layer(${MKL_THREAD_LAYER}) Interface(${INT_SIZE}-byte Integer)")
@@ -98,13 +98,15 @@ find_path(MKL_INCLUDE_DIR
     mkl_blas.h
     mkl_cblas.h
   PATHS
-    $ENV{MKLROOT}
     /opt/intel
     /opt/intel/mkl
     /opt/intel/compilers_and_libraries/linux/mkl
+    $ENV{MKLROOT}
+    $ENV{ONEAPI_ROOT}
   PATH_SUFFIXES
     include
     IntelSWTools/compilers_and_libraries/windows/mkl/include
+	mkl/latest/include
     )
 
 if(MKL_INCLUDE_DIR)
@@ -232,13 +234,18 @@ function(find_mkl_library)
         $ENV{MKLROOT}/lib
         ${ENV_LIBRARY_PATHS}
         /opt/intel/compilers_and_libraries/linux/mkl/lib
+		$ENV{ONEAPI_ROOT}
       PATH_SUFFIXES
         IntelSWTools/compilers_and_libraries/windows/mkl/lib/intel64
         IntelSWTools/compilers_and_libraries/windows/compiler/lib/intel64
         IntelSWTools/compilers_and_libraries/windows/tbb/lib/intel64/${msvc_dir}
         ""
         intel64
-        intel64/gcc4.7)
+        intel64/gcc4.7
+		mkl/latest/lib/intel64
+		compiler/latest/windows/compiler/lib/intel64
+		compiler/latest/windows/compiler/lib/intel64_win
+        tbb/latest/lib/intel64/${msvc_dir})
     list(REMOVE_ITEM CMAKE_FIND_LIBRARY_SUFFIXES ".so.1")
     if(MKL_${mkl_args_NAME}_LINK_LIBRARY)
       if (CMAKE_VERSION VERSION_GREATER 3.14)
@@ -248,12 +255,13 @@ function(find_mkl_library)
     endif()
   endif()
 
-  #message(STATUS "NAME: ${mkl_args_NAME} LIBNAME: ${mkl_args_LIBRARY_NAME} MKL_${mkl_args_NAME}_LINK_LIBRARY  ${MKL_${mkl_args_NAME}_LINK_LIBRARY}")
+  message(STATUS "NAME: ${mkl_args_NAME} LIBNAME: ${mkl_args_LIBRARY_NAME} MKL_${mkl_args_NAME}_LINK_LIBRARY  ${MKL_${mkl_args_NAME}_LINK_LIBRARY}")
 
   if(mkl_args_SEARCH_STATIC)
     find_library(MKL_${mkl_args_NAME}_STATIC_LINK_LIBRARY
       NAMES
         ${CMAKE_STATIC_LIBRARY_PREFIX}${mkl_args_LIBRARY_NAME}${CMAKE_STATIC_LIBRARY_SUFFIX}
+        lib${mkl_args_LIBRARY_NAME}${md_suffix}${CMAKE_STATIC_LIBRARY_SUFFIX}
       PATHS
         /opt/intel/mkl/lib
         /opt/intel/tbb/lib
@@ -261,6 +269,7 @@ function(find_mkl_library)
         $ENV{MKLROOT}/lib
         ${ENV_LIBRARY_PATHS}
         /opt/intel/compilers_and_libraries/linux/mkl/lib
+		$ENV{ONEAPI_ROOT}
       PATH_SUFFIXES
         ""
         intel64
@@ -268,6 +277,10 @@ function(find_mkl_library)
         IntelSWTools/compilers_and_libraries/windows/mkl/lib/intel64
         IntelSWTools/compilers_and_libraries/windows/compiler/lib/intel64
         IntelSWTools/compilers_and_libraries/windows/tbb/lib/intel64/${msvc_dir}
+		mkl/latest/lib/intel64
+		compiler/latest/windows/compiler/lib/intel64
+		compiler/latest/windows/compiler/lib/intel64_win
+        tbb/latest/lib/intel64/${msvc_dir}
         )
     if(MKL_${mkl_args_NAME}_STATIC_LINK_LIBRARY)
       if(CMAKE_VERSION VERSION_GREATER 3.14)
@@ -297,10 +310,16 @@ function(find_mkl_library)
         lib${mkl_args_LIBRARY_NAME}${md_suffix}${CMAKE_SHARED_LIBRARY_SUFFIX}
         $ENV{LIB}
         $ENV{LIBRARY_PATH}
+	  PATHS
+		$ENV{ONEAPI_ROOT}
       PATH_SUFFIXES
         IntelSWTools/compilers_and_libraries/windows/redist/intel64/mkl
         IntelSWTools/compilers_and_libraries/windows/redist/intel64/compiler
         IntelSWTools/compilers_and_libraries/windows/redist/intel64/tbb/${msvc_dir}
+		mkl/latest/redist/intel64
+		compiler/latest/windows/redist/intel64/compiler
+		compiler/latest/windows/redist/intel64_win/compiler
+        tbb/latest/redist/intel64/${msvc_dir}
       NO_SYSTEM_ENVIRONMENT_PATH)
 
     set_target_properties(MKL::${mkl_args_NAME}

@@ -18,7 +18,7 @@ namespace CESDSOL::MKL
 		void SetZeroDiagonalNormalizer(double value) noexcept;
 
 	private:
-		std::array<int, 128> intParameters;
+		std::array<MKL_INT, 128> intParameters;
 		std::array<double, 128> doubleParameters;
 	};
 }

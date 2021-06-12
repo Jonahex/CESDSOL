@@ -4,8 +4,8 @@ namespace CESDSOL::MKL
 {
 	uptr<ILU0::OutputInfo> ILU0::Apply(CSRMatrix<double>& matrix) const noexcept
 	{
-		const int size = matrix.RowCount();
-		int error;
+		const MKL_INT size = matrix.RowCount();
+		MKL_INT error;
 		Array<double> preconditioner(matrix.NonZeroCount());
 		dcsrilu0(&size, matrix.GetValues().data(), matrix.GetRowCounts().data(), matrix.GetColumnIndices().data(),
 			preconditioner.data(), intParameters.data(), doubleParameters.data(), &error);

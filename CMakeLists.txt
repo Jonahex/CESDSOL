@@ -27,10 +27,14 @@ add_executable(CESDSOL ${Sources} ${MainPath})
 find_package(OpenMP REQUIRED)
 target_link_libraries(CESDSOL PRIVATE OpenMP::OpenMP_CXX)
 
+if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
+	target_compile_options(CESDSOL PRIVATE "/openmp:llvm")
+endif()
+
 if (MathBackend STREQUAL "MKLMath")
 	set(MKL_THREAD_LAYER "Intel OpenMP")
 	find_package(MKL REQUIRED PATHS cmake/)
-	target_link_libraries(CESDSOL PRIVATE MKL::Shared)
+	target_link_libraries(CESDSOL PRIVATE MKL::Static)	
 endif()
 
 target_include_directories(CESDSOL PRIVATE ${SourcesPath})

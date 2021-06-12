@@ -6,8 +6,8 @@ namespace CESDSOL::MKL
 {
 	uptr<ILUT::OutputInfo> ILUT::Apply(CSRMatrix<double>& matrix) const noexcept
 	{
-		const int size = matrix.RowCount();
-		int error;
+		const MKL_INT size = matrix.RowCount();
+		MKL_INT error;
 		const size_t newNonzeroCount = (2 * maxfil + 1) * size - maxfil * (maxfil + 1) + 1;
 		CSRMatrix<double> preconditioned(size, size, newNonzeroCount);
 		

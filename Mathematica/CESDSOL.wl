@@ -456,13 +456,11 @@ ExplicitTransientProblem[ceqsRaw_, time_, spatialCoords_, grid_, opts
         rawFields = #[[1, 0, 1]]& /@ ceqsRaw;
         fields = Flatten[MapIndexed[Join[{rawFields[[#2]]}, Table[Private`TimeDerivativeField[rawFields[[First[#2]]], time, i],{i, 1, #1-1}]]&,fieldTopDerivativeOrders]];
         fieldsCount = Length[fields];
-        ceqsCount = Length[ceqsRaw];
         deqsRaw = OptionValue[DiscreteEquations];
         rawVars = #[[1, 0, 1]]& /@ deqsRaw;
         varTopDerivativeOrders = #[[1, 0, 0, 1]]& /@ deqsRaw;
         vars = Flatten[MapIndexed[Join[{rawVars[[#2]]}, Table[Private`TimeDerivativeField[rawVars[[First[#2]]], time, i],{i, 2, #1}]]&,varTopDerivativeOrders]];
         varsCount = Length[vars];
-        deqsCount = Length[deqsRaw];
         rawRules = {Derivative[Repeated[0, {dim}], n_][f_] :> Private`TimeDerivativeField[f, time, n], Derivative[
                 ord:Repeated[x_ /; x > 0, {dim}]
                 ,
@@ -471,6 +469,8 @@ ExplicitTransientProblem[ceqsRaw_, time_, spatialCoords_, grid_, opts
             ][f_] :> Derivative[ord, 0][Private`TimeDerivativeField[f, time, n]], Derivative[$n_][$f_] :> Private`TimeDerivativeField[f, time, n]};
         ceqs = Flatten[MapIndexed[Join[Table[{Private`TimeDerivativeField[rawFields[[First[#2]]], time, i]@@coords},{i, fieldTopDerivativeOrders[[First[#2]]]-1}],{#1[[2]]}]&,ceqsRaw],1]/. rawRules;
         deqs = Flatten[MapIndexed[Join[Table[{Private`TimeDerivativeField[rawVars[[First[#2]]], time, i]@@coords},{i, varTopDerivativeOrders[[First[#2]]]-1}],{#1[[2]]}]&,deqsRaw],1]/. rawRules;
+        ceqsCount = Length[ceqs];
+        deqsCount = Length[deqs];
         params = OptionValue[Parameters];
         paramsCount = Length[params];
         regionCount = 2 dim + 1;

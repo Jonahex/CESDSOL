@@ -17,10 +17,10 @@ namespace CESDSOL::MKL
 		void SetZeroDiagonalNormalizer(double value) noexcept;
 
 	private:
-		std::array<int, 128> intParameters;
+		std::array<MKL_INT, 128> intParameters;
 		std::array<double, 128> doubleParameters;
 
-		MakeProperty(maxfil, MaxFillIn, int, 5);
+		MakeProperty(maxfil, MaxFillIn, MKL_INT, 5);
 		MakeProperty(tolerance, ThresholdTolerance, double, 1e-10);
 	};
 }
