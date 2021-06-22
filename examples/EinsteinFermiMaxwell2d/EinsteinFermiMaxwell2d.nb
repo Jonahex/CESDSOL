@@ -10,10 +10,10 @@
 NotebookFileLineBreakTest
 NotebookFileLineBreakTest
 NotebookDataPosition[       158,          7]
-NotebookDataLength[    651611,      12957]
-NotebookOptionsPosition[    650456,      12931]
-NotebookOutlinePosition[    650892,      12948]
-CellTagsIndexPosition[    650849,      12945]
+NotebookDataLength[    651840,      12963]
+NotebookOptionsPosition[    650721,      12938]
+NotebookOutlinePosition[    651121,      12954]
+CellTagsIndexPosition[    651078,      12951]
 WindowFrame->Normal*)
 
 (* Beginning of Notebook Content *)
@@ -5549,7 +5549,8 @@ Cell[BoxData[{
        RowBox[{"r", "[", 
         RowBox[{"x", ",", "t"}], "]"}]}]}], "}"}]}]}], ";"}]}], "Input",
  CellChangeTimes->{3.832249735623563*^9, 3.832249897894927*^9},
- CellLabel->"In[4]:=",ExpressionUUID->"f189cf5c-03ed-4aee-b7d1-1a17420f6f10"],
+ CellLabel->
+  "In[137]:=",ExpressionUUID->"f189cf5c-03ed-4aee-b7d1-1a17420f6f10"],
 
 Cell[CellGroupData[{
 
@@ -5649,7 +5650,7 @@ Cell[BoxData[
          RowBox[{"x", ",", "t"}], "]"}]}], ",", 
        RowBox[{
         RowBox[{"Right", "[", "x", "]"}], "\[Rule]", 
-        RowBox[{"F2", "[", 
+        RowBox[{"W", "[", 
          RowBox[{"x", ",", "t"}], "]"}]}], ",", 
        RowBox[{
         RowBox[{"Left", "[", "t", "]"}], "\[Rule]", 
@@ -5844,16 +5845,16 @@ Cell[BoxData[
    RowBox[{"IntegralOutput", "\[Rule]", 
     RowBox[{"{", 
      RowBox[{
-      RowBox[{"\"\<M\>\"", "\[Rule]", "TDtot"}], ",", 
-      RowBox[{"\"\<J\>\"", "\[Rule]", "TD34"}], ",", 
-      RowBox[{"\"\<Q\>\"", "\[Rule]", "Jt"}]}], "}"}]}], ",", 
+      RowBox[{"\"\<M_vol\>\"", "\[Rule]", "TDtot"}], ",", 
+      RowBox[{"\"\<J_vol\>\"", "\[Rule]", "TD34"}], ",", 
+      RowBox[{"\"\<Q_vol\>\"", "\[Rule]", "Jt"}]}], "}"}]}], ",", 
    "\[IndentingNewLine]", 
    RowBox[{"CalculateJacobian", "\[Rule]", "True"}], ",", 
    "\[IndentingNewLine]", 
    RowBox[{"PointOutput", "\[Rule]", 
     RowBox[{"{", "\[IndentingNewLine]", 
      RowBox[{
-      RowBox[{"\"\<Minf\>\"", "\[Rule]", 
+      RowBox[{"\"\<M_inf\>\"", "\[Rule]", 
        RowBox[{"{", 
         RowBox[{
          RowBox[{"{", 
@@ -5871,7 +5872,7 @@ Cell[BoxData[
              RowBox[{"1", ",", "0"}], "]"}], "[", "F0", "]"}], "[", 
            RowBox[{"x", ",", "t"}], "]"}]}]}], "}"}]}], ",", 
       "\[IndentingNewLine]", 
-      RowBox[{"\"\<Jinf\>\"", "\[Rule]", 
+      RowBox[{"\"\<J_inf\>\"", "\[Rule]", 
        RowBox[{"{", 
         RowBox[{
          RowBox[{"{", 
@@ -5890,29 +5891,31 @@ Cell[BoxData[
              RowBox[{"2", ",", "0"}], "]"}], "[", "W", "]"}], "[", 
            RowBox[{"x", ",", "t"}], "]"}]}]}], "}"}]}], ",", 
       "\[IndentingNewLine]", 
-      RowBox[{"\"\<Qinf\>\"", "\[Rule]", 
-       RowBox[{"{", 
-        RowBox[{
-         RowBox[{"{", 
-          RowBox[{"1", ",", 
-           RowBox[{"\[Pi]", "/", "2"}]}], "}"}], ",", 
-         RowBox[{"4", "\[Pi]", " ", "con", " ", 
-          RowBox[{
-           RowBox[{
-            RowBox[{"Derivative", "[", 
-             RowBox[{"1", ",", "0"}], "]"}], "[", "V", "]"}], "[", 
-           RowBox[{"x", ",", "t"}], "]"}]}]}], "}"}]}], ",", 
-      "\[IndentingNewLine]", 
-      RowBox[{"\"\<g\>\"", "\[Rule]", 
+      RowBox[{"\"\<Qe_inf\>\"", "\[Rule]", 
        RowBox[{"{", 
         RowBox[{
          RowBox[{"{", 
           RowBox[{"1", ",", 
            RowBox[{"\[Pi]", "/", "2"}]}], "}"}], ",", 
          RowBox[{
-          RowBox[{"(", 
+          RowBox[{"-", "con"}], " ", 
+          RowBox[{
            RowBox[{
-            SuperscriptBox["con", "2"], "/", "2"}], ")"}], " ", 
+            RowBox[{"Derivative", "[", 
+             RowBox[{"1", ",", "0"}], "]"}], "[", "V", "]"}], "[", 
+           RowBox[{"x", ",", "t"}], "]"}]}]}], "}"}]}], ",", 
+      "\[IndentingNewLine]", 
+      RowBox[{"\"\<Qm_inf\>\"", "\[Rule]", 
+       RowBox[{"{", 
+        RowBox[{
+         RowBox[{"{", 
+          RowBox[{"1", ",", 
+           RowBox[{"\[Pi]", "/", "2"}]}], "}"}], ",", 
+         RowBox[{
+          RowBox[{"-", 
+           RowBox[{"(", 
+            RowBox[{
+             SuperscriptBox["con", "2"], "/", "2"}], ")"}]}], " ", 
           RowBox[{
            RowBox[{
             RowBox[{"Derivative", "[", 
@@ -5924,8 +5927,10 @@ Cell[BoxData[
    3.8319741648029656`*^9}, {3.832248447517318*^9, 3.832248467372142*^9}, {
    3.832248567002737*^9, 3.832248650435545*^9}, {3.832248881188974*^9, 
    3.8322488887491302`*^9}, 3.8322497563314123`*^9, {3.8322501242165995`*^9, 
-   3.8322501278814096`*^9}},
- CellLabel->"In[22]:=",ExpressionUUID->"fdfe5522-9f8b-401a-98f7-237fb243d1e9"],
+   3.8322501278814096`*^9}, {3.8333741995755143`*^9, 
+   3.8333742046870074`*^9}, {3.8333742433103933`*^9, 
+   3.8333742929692855`*^9}, {3.833377464999022*^9, 3.833377482404575*^9}},
+ CellLabel->"In[78]:=",ExpressionUUID->"bec186d2-1023-4496-8aa6-99708842a5fb"],
 
 Cell[BoxData["\<\"auto descriptor = StationaryProblemDescriptor<2, double, \
 double>(GridDescriptor<2, double>(5), Array<Array<std::array<size_t, \
@@ -6359,7 +6364,7 @@ pow(1 - l.Point[0],4)*l.DerivativeValues[3][3]))/pow(g.Parameters[0],2)));});\
 \\ndescriptor.SetContinuousEquation(3, 1, [](const auto& l, const auto& g) \
 {return l.FieldValues[3];});\\ndescriptor.SetContinuousEquation(3, 2, \
 [](const auto& l, const auto& g) {return \
-l.FieldValues[2];});\\ndescriptor.SetContinuousEquation(3, 3, [](const auto& \
+l.FieldValues[3];});\\ndescriptor.SetContinuousEquation(3, 3, [](const auto& \
 l, const auto& g) {return \
 l.DerivativeValues[3][0];});\\ndescriptor.SetContinuousEquation(3, 4, \
 [](const auto& l, const auto& g) {return \
@@ -8374,7 +8379,7 @@ l.Point[0],2)*l.VIEValues[0]*sin(l.Point[1])*(g.Parameters[0]*l.FieldValues[8]\
 l.Point[0],2)*l.VIEValues[0]*l.DerivativeValues[8][1]))/(pow(g.Parameters[0],\
 2)*pow(E,2*l.FieldValues[2]));});\\ndescriptor.SetJacobianComponent(3, 3, 0, \
 1, [](const auto& l, const auto& g) {return \
-1;});\\ndescriptor.SetJacobianComponent(3, 2, 0, 2, [](const auto& l, const \
+1;});\\ndescriptor.SetJacobianComponent(3, 3, 0, 2, [](const auto& l, const \
 auto& g) {return 1;});\\ndescriptor.SetJacobianComponent(3, 3, 1, 3, [](const \
 auto& l, const auto& g) {return 1;});\\ndescriptor.SetJacobianComponent(3, 3, \
 1, 4, [](const auto& l, const auto& g) {return \
@@ -9155,9 +9160,10 @@ l.Point[0],2)*l.VIEValues[0]*l.DerivativeValues[4][1])/g.Parameters[0]) + \
 l.FieldValues[4]*(-l.DerivativeValues[7][1] + (pow(1 - \
 l.Point[0],2)*l.VIEValues[0]*l.DerivativeValues[5][1])/g.Parameters[0])))))/\
 pow(1 - l.Point[0],2);}, \
-\\\"M\\\");\\nproblem->AddIntegralOutputExpression([](const auto& l, const \
-auto& g){ return (g.Parameters[0]*pow(E,-l.FieldValues[0] + l.FieldValues[1] \
-+ l.FieldValues[2])*Pi*pow(l.VIEValues[0],2)*sin(l.Point[1])*(2*pow(E,l.\
+\\\"M_vol\\\");\\nproblem->AddIntegralOutputExpression([](const auto& l, \
+const auto& g){ return (g.Parameters[0]*pow(E,-l.FieldValues[0] + \
+l.FieldValues[1] + \
+l.FieldValues[2])*Pi*pow(l.VIEValues[0],2)*sin(l.Point[1])*(2*pow(E,l.\
 FieldValues[0] + l.FieldValues[1])*(g.Parameters[4] + \
 g.Parameters[3]*l.FieldValues[8]*l.VIEValues[0]*sin(l.Point[1]))*(pow(l.\
 FieldValues[6],2) + pow(l.FieldValues[7],2) + pow(l.FieldValues[4],2) + \
@@ -9181,28 +9187,29 @@ l.Point[0],2)*l.VIEValues[0]*l.DerivativeValues[0][2])/g.Parameters[0] + \
 l.Point[0],2)*l.VIEValues[0]*l.DerivativeValues[0][2])/g.Parameters[0] + \
 (pow(1 - l.Point[0],2)*l.VIEValues[0]*l.DerivativeValues[2][1])/g.Parameters[\
 0])))))/pow(1 - l.Point[0],2);}, \
-\\\"J\\\");\\nproblem->AddIntegralOutputExpression([](const auto& l, const \
-auto& g){ return (4*g.Parameters[0]*pow(E,2*l.FieldValues[1] + \
+\\\"J_vol\\\");\\nproblem->AddIntegralOutputExpression([](const auto& l, \
+const auto& g){ return (4*g.Parameters[0]*pow(E,2*l.FieldValues[1] + \
 l.FieldValues[2])*Pi*pow(l.VIEValues[0],2)*sin(l.Point[1])*(pow(l.FieldValues[\
 6],2) + pow(l.FieldValues[7],2) + pow(l.FieldValues[4],2) + \
 pow(l.FieldValues[5],2)))/pow(1 - l.Point[0],2);}, \
-\\\"Q\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const auto& \
-l, const auto& g){ return \
+\\\"Q_vol\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const \
+auto& l, const auto& g){ return \
 (4*g.Parameters[0]*Pi*l.DerivativeValues[0][2])/pow(g.Parameters[1],2);}, \
-\\\"Minf\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const \
+\\\"M_inf\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const \
 auto& l, const auto& g){ return \
 (pow(g.Parameters[0],2)*Pi*l.DerivativeValues[3][3])/pow(g.Parameters[1],2);},\
- \\\"Jinf\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const \
+ \\\"J_inf\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const \
 auto& l, const auto& g){ return \
-4*g.Parameters[0]*Pi*l.DerivativeValues[9][1];}, \
-\\\"Qinf\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const \
+-(g.Parameters[0]*l.DerivativeValues[9][1]);}, \
+\\\"Qe_inf\\\");\\nproblem->AddPointOutputExpression({1., 1.5708}, [](const \
 auto& l, const auto& g){ return \
-(pow(g.Parameters[0],2)*l.DerivativeValues[8][3])/2.;}, \\\"g\\\");\\n\"\>"], \
-"Output",
+-0.5*(pow(g.Parameters[0],2)*l.DerivativeValues[8][3]);}, \\\"Qm_inf\\\");\\n\
+\"\>"], "Output",
  CellChangeTimes->{3.8319706756587763`*^9, 3.8319741677832303`*^9, 
   3.832248651851589*^9, 3.832248889757098*^9, 3.832249889559866*^9, 
-  3.832249931107051*^9, 3.8322500779777975`*^9, 3.8322501283783765`*^9},
- CellLabel->"Out[22]=",ExpressionUUID->"3e575bc8-5d08-4978-8d35-0c03ddb2f870"]
+  3.832249931107051*^9, 3.8322500779777975`*^9, 3.8322501283783765`*^9, 
+  3.8333775185669312`*^9},
+ CellLabel->"Out[78]=",ExpressionUUID->"a5c1f27a-0faa-4fde-a9f0-cd5fe6b298f1"]
 }, Open  ]],
 
 Cell[BoxData[""], "Input",
@@ -12929,9 +12936,8 @@ O0B34FAntMxIflYvDkFqyQmZNhEynCTOMxoT5xn1iPOM/wdMSOyB
  CellLabel->"Out[28]=",ExpressionUUID->"714cf750-ce8a-4c0d-8ed3-c804477eb41c"]
 }, Open  ]]
 },
-WindowSize->{1152., 585.6},
-WindowMargins->{{
-  Automatic, -5.399999999999864}, {-5.399999999999977, Automatic}},
+WindowSize->{1141.2, 579.6},
+WindowMargins->{{0, Automatic}, {Automatic, 0}},
 FrontEndVersion->"12.3 for Microsoft Windows (64-bit) (May 11, 2021)",
 StyleDefinitions->"Default.nb",
 ExpressionUUID->"614722f5-74f4-4707-871b-a3787d936d6b"
@@ -12948,16 +12954,16 @@ CellTagsIndex->{}
 (*NotebookFileOutline
 Notebook[{
 Cell[558, 20, 763, 19, 67, "Input",ExpressionUUID->"4ab39b35-0854-48aa-af1b-c3b7ea6cf481"],
-Cell[1324, 41, 202656, 5510, 3104, "Input",ExpressionUUID->"f189cf5c-03ed-4aee-b7d1-1a17420f6f10"],
+Cell[1324, 41, 202661, 5511, 3126, "Input",ExpressionUUID->"f189cf5c-03ed-4aee-b7d1-1a17420f6f10"],
 Cell[CellGroupData[{
-Cell[204005, 5555, 13521, 372, 501, "Input",ExpressionUUID->"fdfe5522-9f8b-401a-98f7-237fb243d1e9"],
-Cell[217529, 5929, 205693, 3275, 36603, "Output",ExpressionUUID->"3e575bc8-5d08-4978-8d35-0c03ddb2f870"]
+Cell[204010, 5556, 13731, 376, 501, "Input",ExpressionUUID->"bec186d2-1023-4496-8aa6-99708842a5fb"],
+Cell[217744, 5934, 205743, 3277, 37002, "Output",ExpressionUUID->"a5c1f27a-0faa-4fde-a9f0-cd5fe6b298f1"]
 }, Open  ]],
-Cell[423237, 9207, 154, 3, 28, "Input",ExpressionUUID->"42044885-536b-4ba0-ae03-fd12cab7c037"],
-Cell[423394, 9212, 474, 10, 28, "Input",ExpressionUUID->"c6ee0190-b620-4408-a093-7586b1358610"],
+Cell[423502, 9214, 154, 3, 28, "Input",ExpressionUUID->"42044885-536b-4ba0-ae03-fd12cab7c037"],
+Cell[423659, 9219, 474, 10, 28, "Input",ExpressionUUID->"c6ee0190-b620-4408-a093-7586b1358610"],
 Cell[CellGroupData[{
-Cell[423893, 9226, 1032, 24, 28, "Input",ExpressionUUID->"c1ec1ed8-8987-41b7-a89a-ddca722a07fd"],
-Cell[424928, 9252, 225512, 3676, 329, "Output",ExpressionUUID->"714cf750-ce8a-4c0d-8ed3-c804477eb41c"]
+Cell[424158, 9233, 1032, 24, 28, "Input",ExpressionUUID->"c1ec1ed8-8987-41b7-a89a-ddca722a07fd"],
+Cell[425193, 9259, 225512, 3676, 304, "Output",ExpressionUUID->"714cf750-ce8a-4c0d-8ed3-c804477eb41c"]
 }, Open  ]]
 }
 ]
