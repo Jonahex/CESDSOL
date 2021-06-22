@@ -79,6 +79,8 @@ namespace CESDSOL
 		bool isActualOnParameters = true;
 		bool isActualOnVariables = true;
 
+		std::string tag;
+
 	public:
 		[[nodiscard]] size_t DOFCount() const noexcept
 		{
@@ -666,9 +668,14 @@ namespace CESDSOL
 			}
 		}
 
+		void SetTag(const std::string& aTag) noexcept
+		{
+			tag = aTag;
+		}
+
 		[[nodiscard]] std::string MakeStateName() const noexcept
 		{
-			std::string result = descriptor.GetProblemName();
+			std::string result = tag.empty() ? descriptor.GetProblemName() : Format("{}_{}", descriptor.GetProblemName(), tag);
 			for (size_t parameterIndex = 0; parameterIndex < ParameterCount(); ++parameterIndex)
 			{
 				result.append(Format("_{}={}", descriptor.GetParameterName(parameterIndex), parameters[parameterIndex]));

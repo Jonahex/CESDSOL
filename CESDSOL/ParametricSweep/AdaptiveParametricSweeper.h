@@ -83,6 +83,8 @@ namespace CESDSOL
 			ValueType changeBranchStep = 1;
 			size_t changeBranchTrial = 0;
 
+			this->problem->SetTag(Format("branch={}", initialBranch + branch));
+
 			if (interpolateInitialGuess)
 			{
 				previousSolution = this->problem->GetVariables().Flatten();
@@ -201,6 +203,7 @@ namespace CESDSOL
 						changeBranchStep = 1;
 						changeBranchTrial = 0;
 						isChangingBranch = false;
+						this->problem->SetTag(Format("branch={}", initialBranch + branch));
 					}
 					else if (interpolateInitialGuess)
 					{
@@ -246,5 +249,6 @@ namespace CESDSOL
 		MakeProperty(maxBranchCount, MaxBranchCount, size_t, 5);
 		MakeProperty(limitSolutionCount, LimitSolutionCount, bool, true);
 		MakeProperty(maxSolutionCount, MaxSolutionCount, size_t, 1000);
+		MakeProperty(initialBranch, InitialBranch, ptrdiff_t, 1);
 	};
 }
