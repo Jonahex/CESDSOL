@@ -838,6 +838,7 @@ namespace CESDSOL
 		void LoadParameters(FieldType* sourceData) noexcept
 		{
 			Copy(std::span(sourceData, descriptor.ParameterCount()), parameters);
+			isActualOnParameters = false;
 		}
 
 		void LoadVariables(FieldType* sourceData, const std::shared_ptr<Grid<Dimension, CoordinateType>>& loadedGrid) noexcept
@@ -852,6 +853,7 @@ namespace CESDSOL
 			{
 				Copy(std::span(sourceData, DOFCount()), variables.Flatten());
 			}
+			SetVariablesUpdated();
 		}
 
 	public:
