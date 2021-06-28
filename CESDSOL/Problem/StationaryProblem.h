@@ -264,58 +264,61 @@ namespace CESDSOL
 					reductionJacobians[j][k][0][0] = 0;
 				}
 			}
-#pragma omp parallel
-			{
-				auto locals = ConstructLocalValuesForJacobian();
-#pragma omp for
-				for (int64_t i = 0; i < grid->GetSize(); ++i)
+			ParallelBlock(
+				[&]()
 				{
-					FillAllLocals(i, locals);
-					for (size_t j = 0; j < descriptor.LocalVDECount(); ++j)
-					{
-						for (size_t k = 0; k < descriptor.EquationCount(); ++k)
+					auto locals = ConstructLocalValuesForJacobian();
+					ForInParallelBlock(0, grid->GetSize(),
+						[&](int64_t i)
 						{
-							for (size_t l = 0; l <= (k < descriptor.ContinuousEquationCount() ? descriptor.DerivativeOperatorCount(k) : 0); ++l)
+							FillAllLocals(i, locals);
+							for (size_t j = 0; j < descriptor.LocalVDECount(); ++j)
 							{
-								if (descriptor.HasLVDEJacobianComponent(j, k, l))
+								for (size_t k = 0; k < descriptor.EquationCount(); ++k)
 								{
-									lvdeJacobians[j][k][l][i] = descriptor.CalculateLVDEJacobianComponent(j, k, l, locals, globals);
-									locals.LVDEJacobianComponentValues[j][k][l] = lvdeJacobians[j][k][l][i];
+									for (size_t l = 0; l <= (k < descriptor.ContinuousEquationCount() ? descriptor.DerivativeOperatorCount(k) : 0); ++l)
+									{
+										if (descriptor.HasLVDEJacobianComponent(j, k, l))
+										{
+											lvdeJacobians[j][k][l][i] = descriptor.CalculateLVDEJacobianComponent(j, k, l, locals, globals);
+											locals.LVDEJacobianComponentValues[j][k][l] = lvdeJacobians[j][k][l][i];
+										}
+									}
 								}
 							}
-						}
-					}
-					for (size_t j = 0; j < descriptor.ReductionCount(); j++)
-					{
-						for (size_t k = 0; k < descriptor.ContinuousEquationCount(); k++)
-						{
-							if (descriptor.HasReductionJacobianComponent(j, k, 0))
+							for (size_t j = 0; j < descriptor.ReductionCount(); j++)
 							{
-								reductionJacobians[j][k][0][i] = descriptor.CalculateReductionJacobianComponent(j, k, 0, locals, globals);
-							}
-							for (size_t l = 1; l <= descriptor.DerivativeOperatorCount(k); l++)
-							{
-								if (descriptor.HasReductionJacobianComponent(j, k, l))
+								for (size_t k = 0; k < descriptor.ContinuousEquationCount(); k++)
 								{
-									const auto& weightsMatrix = differentiationWeights[fieldDerivativeOperatorMap[k][l - 1]];
-									for (size_t n = weightsMatrix.GetRowCount(i); n < weightsMatrix.GetRowCount(i + 1); ++n)
+									if (descriptor.HasReductionJacobianComponent(j, k, 0))
 									{
-										reductionJacobians[j][k][l][weightsMatrix.GetColumnIndex(n)] +=
-											descriptor.CalculateReductionJacobianComponent(j, k, l, locals, globals) * weightsMatrix.GetValue(n);
+										reductionJacobians[j][k][0][i] = descriptor.CalculateReductionJacobianComponent(j, k, 0, locals, globals);
+									}
+									for (size_t l = 1; l <= descriptor.DerivativeOperatorCount(k); l++)
+									{
+										if (descriptor.HasReductionJacobianComponent(j, k, l))
+										{
+											const auto& weightsMatrix = differentiationWeights[fieldDerivativeOperatorMap[k][l - 1]];
+											for (size_t n = weightsMatrix.GetRowCount(i); n < weightsMatrix.GetRowCount(i + 1); ++n)
+											{
+												reductionJacobians[j][k][l][weightsMatrix.GetColumnIndex(n)] +=
+													descriptor.CalculateReductionJacobianComponent(j, k, l, locals, globals) * weightsMatrix.GetValue(n);
+											}
+										}
+									}
+								}
+								for (size_t k = descriptor.ContinuousEquationCount(); k < descriptor.EquationCount(); ++k)
+								{
+									if (descriptor.HasReductionJacobianComponent(j, k, 0))
+									{
+										reductionJacobians[j][k][0][0] += descriptor.CalculateReductionInternalJacobianComponent(j, k, 0, locals, globals);
 									}
 								}
 							}
 						}
-						for (size_t k = descriptor.ContinuousEquationCount(); k < descriptor.EquationCount(); ++k)
-						{
-							if (descriptor.HasReductionJacobianComponent(j, k, 0))
-							{
-								reductionJacobians[j][k][0][0] += descriptor.CalculateReductionInternalJacobianComponent(j, k, 0, locals, globals);
-							}
-						}
-					}
+					);
 				}
-			}
+			);
 			for (size_t j = 0; j < descriptor.LocalVDECount(); ++j)
 			{
 				for (size_t k = descriptor.ContinuousEquationCount(); k < descriptor.EquationCount(); ++k)
@@ -328,37 +331,40 @@ namespace CESDSOL
 		void CalculateJacobian() noexcept
 		{
 			const auto globals = ConstructGlobalValuesForJacobian();
-#pragma omp parallel
-			{
-				auto locals = ConstructLocalValuesForJacobian();
-				FillReductionJacobiansGlobal(locals);
-#pragma omp for
-				for (int64_t i = 0; i < grid->GetSize(); i++)
+			ParallelBlock(
+				[&]()
 				{
-					FillAllLocals(i, locals);
-					FillLVDEJacobians(i, locals);
-					FillReductionJacobians(i, locals);
-					const auto regionIndex = grid->GetRegionIndex(i);
-					for (size_t j = 0; j < descriptor.EquationCount(); j++)
-					{
-						auto trueRegionIndex = regionIndex;
-						if (j >= descriptor.ContinuousEquationCount() || !descriptor.HasContinuousEquation(j, regionIndex))
+					auto locals = ConstructLocalValuesForJacobian();
+					FillReductionJacobiansGlobal(locals);
+					ForInParallelBlock(0, grid->GetSize(),
+						[&](int64_t i)
 						{
-							trueRegionIndex = 0;
-						}
-						for (size_t k = 0; k < descriptor.EquationCount(); k++)
-						{
-							for (size_t l = 0; l <= (k < descriptor.ContinuousEquationCount() ? descriptor.DerivativeOperatorCount(k) : 0); l++)
+							FillAllLocals(i, locals);
+							FillLVDEJacobians(i, locals);
+							FillReductionJacobians(i, locals);
+							const auto regionIndex = grid->GetRegionIndex(i);
+							for (size_t j = 0; j < descriptor.EquationCount(); j++)
 							{
-								if (descriptor.HasJacobianComponent(j, k, l, trueRegionIndex))
+								auto trueRegionIndex = regionIndex;
+								if (j >= descriptor.ContinuousEquationCount() || !descriptor.HasContinuousEquation(j, regionIndex))
 								{
-									jacobian[j][k][l][i] = descriptor.CalculateJacobianComponent(j, k, l, trueRegionIndex, locals, globals);
+									trueRegionIndex = 0;
+								}
+								for (size_t k = 0; k < descriptor.EquationCount(); k++)
+								{
+									for (size_t l = 0; l <= (k < descriptor.ContinuousEquationCount() ? descriptor.DerivativeOperatorCount(k) : 0); l++)
+									{
+										if (descriptor.HasJacobianComponent(j, k, l, trueRegionIndex))
+										{
+											jacobian[j][k][l][i] = descriptor.CalculateJacobianComponent(j, k, l, trueRegionIndex, locals, globals);
+										}
+									}
 								}
 							}
 						}
-					}
+					);
 				}
-			}
+			);
 		}
 
 		void CalculateJacobianStructure() noexcept
@@ -376,67 +382,68 @@ namespace CESDSOL
 				std::atomic<size_t> nonzeroCount = 0;
 				for (size_t i = 0; i < ceCount; ++i)
 				{
-#pragma omp parallel for
-					for (int64_t k = 0; k < grid->GetSize(); ++k)
-					{
-						const auto trueRegionIndex = GetTrueRegionIndex(i, k);
-						for (size_t j = 0; j < ceCount; ++j)
+					ParallelFor(0, grid->GetSize(), 
+						[&](int64_t k)
 						{
-							size_t elementCount = 0;
-							if (descriptor.HasJacobianComponent(i, j, 0, trueRegionIndex))
+							const auto trueRegionIndex = GetTrueRegionIndex(i, k);
+							for (size_t j = 0; j < ceCount; ++j)
 							{
-								++elementCount;
-							}
-							for (size_t l = 1; l <= descriptor.DerivativeOperatorCount(j); ++l)
-							{
-								if (descriptor.HasJacobianComponent(i, j, l, trueRegionIndex))
+								size_t elementCount = 0;
+								if (descriptor.HasJacobianComponent(i, j, 0, trueRegionIndex))
 								{
-									elementCount += differentiationWeights[fieldDerivativeOperatorMap[j][l - 1]].GetRowLength(k);
+									++elementCount;
 								}
-							}
-							auto& row = jacobianStructure[i][k][j] = Array<JacobianElement>(elementCount);
-							size_t elementIndex = 0;
-							if (descriptor.HasJacobianComponent(i, j, 0, trueRegionIndex))
-							{
-								row[elementIndex++] = { j * grid->GetSize() + k, 0, 1 };
-							}
-							for (size_t l = 1; l <= descriptor.DerivativeOperatorCount(j); ++l)
-							{
-								if (descriptor.HasJacobianComponent(i, j, l, trueRegionIndex))
+								for (size_t l = 1; l <= descriptor.DerivativeOperatorCount(j); ++l)
 								{
-									const auto& weightMatrix = differentiationWeights[fieldDerivativeOperatorMap[j][l - 1]];
-									for (size_t m = weightMatrix.GetRowCount(k); m < weightMatrix.GetRowCount(k + 1); ++m)
+									if (descriptor.HasJacobianComponent(i, j, l, trueRegionIndex))
 									{
-										row[elementIndex++] = { j * grid->GetSize() + weightMatrix.GetColumnIndex(m), l, weightMatrix.GetValue(m) };
+										elementCount += differentiationWeights[fieldDerivativeOperatorMap[j][l - 1]].GetRowLength(k);
 									}
 								}
-							}
-							std::sort(row.begin(), row.end(), [](const auto& left, const auto& right) {return left.Index < right.Index; });
-
-							if (elementCount > 0)
-							{
-								size_t setElements = 1;
-								auto currentElement = row[0].Index;
-								for (size_t l = 1; l < elementCount; l++)
+								auto& row = jacobianStructure[i][k][j] = Array<JacobianElement>(elementCount);
+								size_t elementIndex = 0;
+								if (descriptor.HasJacobianComponent(i, j, 0, trueRegionIndex))
 								{
-									if (row[l].Index != currentElement)
+									row[elementIndex++] = { j * grid->GetSize() + k, 0, 1 };
+								}
+								for (size_t l = 1; l <= descriptor.DerivativeOperatorCount(j); ++l)
+								{
+									if (descriptor.HasJacobianComponent(i, j, l, trueRegionIndex))
 									{
-										++setElements;
-										currentElement = row[l].Index;
+										const auto& weightMatrix = differentiationWeights[fieldDerivativeOperatorMap[j][l - 1]];
+										for (size_t m = weightMatrix.GetRowCount(k); m < weightMatrix.GetRowCount(k + 1); ++m)
+										{
+											row[elementIndex++] = { j * grid->GetSize() + weightMatrix.GetColumnIndex(m), l, weightMatrix.GetValue(m) };
+										}
 									}
 								}
-								nonzeroCount += setElements;
-							}
-						}
+								std::sort(row.begin(), row.end(), [](const auto& left, const auto& right) {return left.Index < right.Index; });
 
-						for (size_t j = ceCount; j < eCount; ++j)
-						{
-							if (descriptor.HasJacobianComponent(i, j, 0, trueRegionIndex))
+								if (elementCount > 0)
+								{
+									size_t setElements = 1;
+									auto currentElement = row[0].Index;
+									for (size_t l = 1; l < elementCount; l++)
+									{
+										if (row[l].Index != currentElement)
+										{
+											++setElements;
+											currentElement = row[l].Index;
+										}
+									}
+									nonzeroCount += setElements;
+								}
+							}
+
+							for (size_t j = ceCount; j < eCount; ++j)
 							{
-								++nonzeroCount;
+								if (descriptor.HasJacobianComponent(i, j, 0, trueRegionIndex))
+								{
+									++nonzeroCount;
+								}
 							}
 						}
-					}
+					);
 				}
 
 				for (size_t i = ceCount; i < eCount; ++i)
@@ -545,28 +552,29 @@ namespace CESDSOL
 				jacobianMatrix.Nullify();
 				for (size_t i = 0; i < ceCount; i++)
 				{
-#pragma omp parallel for
-					for (int64_t j = 0; j < grid->GetSize(); j++)
-					{
-						auto lastIndex = jacobianMatrix.GetRowCount(i * grid->GetSize() + j);
-						for (size_t k = 0; k < ceCount; k++)
+					ParallelFor(0, grid->GetSize(),
+						[&](int64_t j)
 						{
-							const auto& row = jacobianStructure[i][j][k];
-							for (size_t l = 0; l < row.size(); l++)
+							auto lastIndex = jacobianMatrix.GetRowCount(i * grid->GetSize() + j);
+							for (size_t k = 0; k < ceCount; k++)
 							{
-								lastIndex = row[l].Index;
-								jacobianMatrix.SetValue(lastIndex, jacobianMatrix.GetValue(lastIndex) + row[l].Multiplier * jacobian[i][k][row[l].OperatorIndex][j]);
+								const auto& row = jacobianStructure[i][j][k];
+								for (size_t l = 0; l < row.size(); l++)
+								{
+									lastIndex = row[l].Index;
+									jacobianMatrix.SetValue(lastIndex, jacobianMatrix.GetValue(lastIndex) + row[l].Multiplier * jacobian[i][k][row[l].OperatorIndex][j]);
+								}
+							}
+							for (size_t k = ceCount; k < eCount; ++k)
+							{
+								const auto trueRegionIndex = GetTrueRegionIndex(i, j);
+								if (descriptor.HasJacobianComponent(i, k, 0, trueRegionIndex))
+								{
+									jacobianMatrix.SetValue(lastIndex++, jacobian[i][k][0][j]);
+								}
 							}
 						}
-						for (size_t k = ceCount; k < eCount; ++k)
-						{
-							const auto trueRegionIndex = GetTrueRegionIndex(i, j);
-							if (descriptor.HasJacobianComponent(i, k, 0, trueRegionIndex))
-							{
-								jacobianMatrix.SetValue(lastIndex++, jacobian[i][k][0][j]);
-							}
-						}
-					}
+					);
 				}
 				for (size_t i = ceCount; i < eCount; ++i)
 				{

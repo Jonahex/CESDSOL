@@ -7,6 +7,7 @@
 #include "Serialization/DataToLoad.h"
 #include "Serialization/DataType.h"
 #include "Serialization/ProblemType.h"
+#include "Utils/Parallelism/Parallelism.h"
 
 #include <any>
 
@@ -287,21 +288,24 @@ namespace CESDSOL
 			{
 				globalVIEs[i] = descriptor.CalculateGlobalVariableIndependentExpression(i, globals);
 			}
-#pragma omp parallel
-			{
-				auto locals = ConstructLocalValuesForVIEs();
-#pragma omp for
-				for (int64_t i = 0; i < grid->GetSize(); i++)
+			ParallelBlock(
+				[&]()
 				{
-					locals.Point = grid->GetCoordinates(i);
-					FillPIEs(i, locals);
-					for (size_t j = 0; j < descriptor.LocalVIECount(); j++)
-					{
-						localVIEs[j][i] = descriptor.CalculateLocalVariableIndependentExpression(j, locals, globals);
-						locals.VIEValues[j] = localVIEs[j][i];
-					}
+					auto locals = ConstructLocalValuesForVIEs();
+					ForInParallelBlock(0, grid->GetSize(), 
+						[&](int64_t i)
+						{
+							locals.Point = grid->GetCoordinates(i);
+							FillPIEs(i, locals);
+							for (size_t j = 0; j < descriptor.LocalVIECount(); j++)
+							{
+								localVIEs[j][i] = descriptor.CalculateLocalVariableIndependentExpression(j, locals, globals);
+								locals.VIEValues[j] = localVIEs[j][i];
+							}
+						}
+					);
 				}
-			}
+			);
 		}
 
 		void UpdateReductions() noexcept
@@ -330,22 +334,25 @@ namespace CESDSOL
 			{
 				globalVDEs[i] = descriptor.CalculateGlobalVariableDependentExpression(i, globals);
 			}
-#pragma omp parallel
-			{
-				auto locals = ConstructLocalValues();
-#pragma omp for
-				for (int64_t i = 0; i < grid->GetSize(); i++)
+			ParallelBlock(
+				[&]()
 				{
-					FillEssentialLocals(i, locals);
-					FillPIEs(i, locals);
-					FillVIEs(i, locals);
-					for (size_t j = 0; j < descriptor.LocalVDECount(); j++)
-					{
-						localVDEs[j][i] = descriptor.CalculateLocalVariableDependentExpression(j, locals, globals);
-						locals.VDEValues[j] = localVDEs[j][i];
-					}
+					auto locals = ConstructLocalValues();
+					ForInParallelBlock(0, grid->GetSize(),
+						[&](int64_t i)
+						{
+							FillEssentialLocals(i, locals);
+							FillPIEs(i, locals);
+							FillVIEs(i, locals);
+							for (size_t j = 0; j < descriptor.LocalVDECount(); j++)
+							{
+								localVDEs[j][i] = descriptor.CalculateLocalVariableDependentExpression(j, locals, globals);
+								locals.VDEValues[j] = localVDEs[j][i];
+							}
+						}
+					);
 				}
-			}
+			);
 		}
 
 		void UpdateEquations() noexcept
@@ -355,21 +362,24 @@ namespace CESDSOL
 			{
 				equations[descriptor.ContinuousEquationCount() + i][0] = descriptor.CalculateDiscreteEquation(i, globals);
 			}
-#pragma omp parallel
-			{
-				auto locals = ConstructLocalValues();
-#pragma omp for
-				for (int64_t i = 0; i < grid->GetSize(); i++)
+			ParallelBlock(
+				[&]()
 				{
-					FillAllLocals(i, locals);
-					const auto regionIndex = grid->GetRegionIndex(i);
-					for (size_t j = 0; j < descriptor.ContinuousEquationCount(); j++)
-					{
-						const auto trueRegionIndex = descriptor.HasContinuousEquation(j, regionIndex) ? regionIndex : 0;
-						equations[j][i] = descriptor.CalculateContinuousEquation(j, trueRegionIndex, locals, globals);
-					}
+					auto locals = ConstructLocalValues();
+					ForInParallelBlock(0, grid->GetSize(),
+						[&](int64_t i)
+						{
+							FillAllLocals(i, locals);
+							const auto regionIndex = grid->GetRegionIndex(i);
+							for (size_t j = 0; j < descriptor.ContinuousEquationCount(); j++)
+							{
+								const auto trueRegionIndex = descriptor.HasContinuousEquation(j, regionIndex) ? regionIndex : 0;
+								equations[j][i] = descriptor.CalculateContinuousEquation(j, trueRegionIndex, locals, globals);
+							}
+						}
+					);
 				}
-			}
+			);
 		}
 
 		void Actualize() noexcept
@@ -555,16 +565,19 @@ namespace CESDSOL
 		{
 			Actualize();
 			const auto globals = ConstructGlobalValues();
-#pragma omp parallel 
-			{
-				auto locals = ConstructLocalValues();
-#pragma omp for
-				for (size_t i = 0; i < grid->GetSize(); i++)
+			ParallelBlock(
+				[&]()
 				{
-					FillAllLocals(i, locals);
-					output[i] = localOutputExpressions[index].first(locals, globals);
+					auto locals = ConstructLocalValues();
+					ForInParallelBlock(0, grid->GetSize(),
+						[&](int64_t i)
+						{
+							FillAllLocals(i, locals);
+							output[i] = localOutputExpressions[index].first(locals, globals);
+						}
+					);
 				}
-			}
+			);
 		}
 
 		[[nodiscard]] FieldType CalculateGlobalOutput(size_t index) noexcept
@@ -607,19 +620,22 @@ namespace CESDSOL
 		{
 			Actualize();
 			const auto globals = ConstructGlobalValues();
-#pragma omp parallel
-			{
-				auto locals = ConstructLocalValues();
-#pragma omp for
-				for (int64_t i = 0; i < grid->GetSize(); i++)
+			ParallelBlock(
+				[&]()
 				{
-					FillAllLocals(i, locals);
-					for (size_t j = 0; j < LocalOutputExpressionCount(); j++)
-					{
-						output[j][i] = localOutputExpressions[j].first(locals, globals);
-					}
+					auto locals = ConstructLocalValues();
+					ForInParallelBlock(0, grid->GetSize(),
+						[&](int64_t i)
+						{
+							FillAllLocals(i, locals);
+							for (size_t j = 0; j < LocalOutputExpressionCount(); j++)
+							{
+								output[j][i] = localOutputExpressions[j].first(locals, globals);
+							}
+						}
+					);
 				}
-			}
+			);
 		}
 
 		void CalculateGlobalOutput(Array<FieldType>& output) noexcept
