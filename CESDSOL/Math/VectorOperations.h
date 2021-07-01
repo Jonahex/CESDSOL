@@ -23,16 +23,16 @@ namespace CESDSOL
 		return range;
 	}
 
-	template<typename ScalarType> 
-	[[nodiscard]] constexpr Vector<ScalarType> Transform(const Vector<ScalarType>& vector, const std::function<ScalarType(ScalarType)>& functor) noexcept
+	template<Concepts::Vector VectorType>
+	[[nodiscard]] constexpr auto Transform(const VectorType& vector, const std::function<typename VectorType::value_type(typename VectorType::value_type)>& functor) noexcept
 	{
-		auto result = Vector<ScalarType>(vector.size());
+		auto result = Vector<typename VectorType::value_type>(vector.size());
 		std::transform(vector.begin(), vector.end(), result.begin(), functor);
 		return result;
 	}
 
-	template<Concepts::Vector ArrayType, typename ScalarType>
-	[[nodiscard]] constexpr auto LowerBoundIndexBinary(const ArrayType& array, const ScalarType& value) noexcept
+	template<Concepts::Vector VectorType, typename ScalarType>
+	[[nodiscard]] constexpr auto LowerBoundIndexBinary(const VectorType& array, const ScalarType& value) noexcept
 	{
 		const auto lowerBound = std::lower_bound(array.begin(), array.end(), value);
 		return (lowerBound - array.begin());
@@ -45,30 +45,31 @@ namespace CESDSOL
 		LinearAlgebra::Copy(x.data(), y.data(), x.size());
 	}
 
-	template<Concepts::Vector ArrayType1, Concepts::Vector ArrayType2>
-	constexpr void AXPY(typename ArrayType1::value_type a, const ArrayType1& x, ArrayType2& y) noexcept
+	template<typename ScalarType, Concepts::Vector XVectorType, Concepts::Vector YVectorType>
+	constexpr void AXPY(ScalarType a, const XVectorType& x, YVectorType& y) noexcept
 	{
 		AssertE(x.size() == y.size(), MessageTag::Math, "Trying to perform AXPY operation with vectors of unequal size.");
 		LinearAlgebra::AXPY(a, x.data(), y.data(), x.size());
 	}
 
-	template<Concepts::Vector ArrayType1, Concepts::Vector ArrayType2>
-	constexpr void AXPBY(typename ArrayType1::value_type a, const ArrayType1& x, typename ArrayType1::value_type b, ArrayType2& y) noexcept
+	template<typename AScalarType, Concepts::Vector XVectorType, typename BScalarType, Concepts::Vector YVectorType>
+	constexpr void AXPBY(typename AScalarType a, const XVectorType& x, BScalarType b, YVectorType& y) noexcept
 	{
 		AssertE(x.size() == y.size(), MessageTag::Math, "Trying to perform AXPBY operation with vectors of unequal size.");
 		LinearAlgebra::AXPBY(a, x.data(), b, y.data(), x.size());
 	}
 
-	template<Concepts::Vector ArrayType>
-	constexpr void Scale(typename ArrayType::value_type a, ArrayType& x) noexcept
+	template<typename ScalarType, Concepts::Vector VectorType>
+	constexpr void Scale(typename ScalarType a, VectorType& x) noexcept
 	{
 		LinearAlgebra::Scale(a, x.data(), x.size());
 	}
 
-	template<Concepts::Vector VectorType>
-	[[nodiscard]] constexpr VectorType DirectProductAsVector(const VectorType& left, const VectorType& right) noexcept
+	template<Concepts::Vector LeftVectorType, Concepts::Vector RightVectorType>
+	[[nodiscard]] constexpr auto DirectProductAsVector(const LeftVectorType& left, const RightVectorType& right) noexcept
 	{
-		auto result = VectorType(left.size() * right.size());
+		using ScalarType = std::common_type_t<typename LeftVectorType::value_type, typename RightVectorType::value_type>;
+		auto result = Vector<ScalarType>(left.size() * right.size());
 		size_t k = 0;
 		for (size_t i = 0; i < left.size(); i++)
 		{
@@ -80,9 +81,39 @@ namespace CESDSOL
 		return result;
 	}
 
-	template<Concepts::Vector ArrayType>
-	constexpr auto Norm2(const ArrayType& x) noexcept
+	template<Concepts::Vector VectorType>
+	constexpr auto Norm2(const VectorType& x) noexcept
 	{
 		return LinearAlgebra::Norm2(x.data(), x.size());
+	}
+
+	template<Concepts::Vector LeftVectorType, Concepts::Vector RightVectorType>
+	[[nodiscard]] auto Add(const LeftVectorType& left, const RightVectorType& right) noexcept
+	{
+		AssertE(left.size() == right.size(), MessageTag::Math, "Trying to add vectors of unequal size.");
+		using ScalarType = std::common_type_t<typename LeftVectorType::value_type, typename RightVectorType::value_type>;
+		auto result = Vector<ScalarType>(left.size());
+		LinearAlgebra::Add(left.data(), right.data(), result.data(), left.size());
+		return result;
+	}
+
+	template<Concepts::Vector LeftVectorType, Concepts::Vector RightVectorType>
+	[[nodiscard]] auto Subtract(const LeftVectorType& left, const RightVectorType& right) noexcept
+	{
+		AssertE(left.size() == right.size(), MessageTag::Math, "Trying to subtract vectors of unequal size.");
+		using ScalarType = std::common_type_t<typename LeftVectorType::value_type, typename RightVectorType::value_type>;
+		auto result = Vector<ScalarType>(left.size());
+		LinearAlgebra::Subtract(left.data(), right.data(), result.data(), left.size());
+		return result;
+	}
+
+	template<Concepts::Vector LeftVectorType, Concepts::Vector RightVectorType>
+	[[nodiscard]] auto Multiply(const LeftVectorType& left, const RightVectorType& right) noexcept
+	{
+		AssertE(left.size() == right.size(), MessageTag::Math, "Trying to multiply vectors of unequal size.");
+		using ScalarType = std::common_type_t<typename LeftVectorType::value_type, typename RightVectorType::value_type>;
+		auto result = Vector<ScalarType>(left.size());
+		LinearAlgebra::Multiply(left.data(), right.data(), result.data(), left.size());
+		return result;
 	}
 }

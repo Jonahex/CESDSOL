@@ -4,17 +4,14 @@
 
 namespace CESDSOL::Native
 {
-	template<typename ScalarType>
-	constexpr void Copy(const ScalarType* source, ScalarType* destination, size_t count) noexcept
+	template<typename SourceScalarType, typename DestinationScalarType>
+	constexpr void Copy(const SourceScalarType* source, DestinationScalarType* destination, size_t count) noexcept
 	{
-		for (size_t i = 0; i < count; i++)
-		{
-			destination[i] = source[i];
-		}
+		std::copy(source, source + count, destination);
 	}
 
-	template<typename ScalarType>
-	constexpr void AXPY(ScalarType a, const ScalarType* x, ScalarType* y, size_t count) noexcept
+	template<typename AScalarType, typename XScalarType, typename YScalarType>
+	constexpr void AXPY(AScalarType a, const XScalarType* x, YScalarType* y, size_t count) noexcept
 	{
 		for (size_t i = 0; i < count; i++)
 		{
@@ -22,8 +19,8 @@ namespace CESDSOL::Native
 		}
 	}
 
-	template<typename ScalarType>
-	constexpr void AXPBY(ScalarType a, const ScalarType* x, ScalarType b, ScalarType* y, size_t count) noexcept
+	template<typename AScalarType, typename XScalarType, typename BScalarType, typename YScalarType>
+	constexpr void AXPBY(AScalarType a, const XScalarType* x, BScalarType b, YScalarType* y, size_t count) noexcept
 	{
 		for (size_t i = 0; i < count; i++)
 		{
@@ -31,8 +28,8 @@ namespace CESDSOL::Native
 		}
 	}
 
-	template<typename ScalarType>
-	constexpr void Scale(ScalarType a, ScalarType* x, size_t count) noexcept
+	template<typename AScalarType, typename XScalarType>
+	constexpr void Scale(AScalarType a, XScalarType* x, size_t count) noexcept
 	{
 		for (size_t i = 0; i < count; i++)
 		{
@@ -41,7 +38,7 @@ namespace CESDSOL::Native
 	}
 
 	template<typename ScalarType>
-	constexpr ScalarType Norm2(const ScalarType* x, size_t count) noexcept
+	[[nodiscard]] ScalarType Norm2(const ScalarType* x, size_t count) noexcept
 	{
 		ScalarType result = 0;
 		for (size_t i = 0; i < count; i++)
@@ -52,7 +49,7 @@ namespace CESDSOL::Native
 	}
 
 	template<typename ScalarType>
-	constexpr ScalarType Norm2(const std::complex<ScalarType>* x, size_t count) noexcept
+	[[nodiscard]] ScalarType Norm2(const std::complex<ScalarType>* x, size_t count) noexcept
 	{
 		ScalarType result = 0;
 		for (size_t i = 0; i < count; i++)
@@ -60,5 +57,32 @@ namespace CESDSOL::Native
 			result += x[i] * std::conj(x[i]);
 		}
 		return std::sqrt(result);
+	}
+
+	template<typename AScalarType, typename BScalarType>
+	void Add(const AScalarType* a, const BScalarType* b, std::common_type_t<AScalarType, BScalarType>* x, size_t count) noexcept
+	{
+		for (size_t i = 0; i < count; ++i)
+		{
+			x[i] = a[i] + b[i];
+		}
+	}
+
+	template<typename AScalarType, typename BScalarType>
+	void Subtract(const AScalarType* a, const BScalarType* b, std::common_type_t<AScalarType, BScalarType>* x, size_t count) noexcept
+	{
+		for (size_t i = 0; i < count; ++i)
+		{
+			x[i] = a[i] - b[i];
+		}
+	}
+
+	template<typename AScalarType, typename BScalarType>
+	void Multiply(const AScalarType* a, const BScalarType* b, std::common_type_t<AScalarType, BScalarType>* x, size_t count) noexcept
+	{
+		for (size_t i = 0; i < count; ++i)
+		{
+			x[i] = a[i] * b[i];
+		}
 	}
 }

@@ -29,8 +29,8 @@ namespace CESDSOL::MKL
 			IntParametersType intParameters;
 			DoubleParametersType floatParameters;
 
-			int rciRequest = 0;
-			const int size = y.size();
+			MKL_INT rciRequest = 0;
+			const MKL_INT size = y.size();
 			auto tmp = MakeTempVector(size);
 			dfgmres_init(&size, x.data(), y.data(), &rciRequest, intParameters.data(), 
 				floatParameters.data(), tmp.data());
@@ -134,20 +134,20 @@ namespace CESDSOL::MKL
 		}
 
 	private:
-		static constexpr int ErrorInParametersRCIRequest = -12;
-		static constexpr int InfiniteCycleRCIRequest = -11;
-		static constexpr int DividedByZeroRCIRequest = -10;
-		static constexpr int HitIterationLimitWithoutConvergenceRCIRequest = -1;
-		static constexpr int SuccessRCIRequest = 0;
-		static constexpr int MultiplyMatrixRCIRequest = 1;
-		static constexpr int StoppingTestRCIRequest = 2;
-		static constexpr int ApplyPreconditionerRCIRequest = 3;
-		static constexpr int CheckNormRCIRequest = 4;
+		static constexpr MKL_INT ErrorInParametersRCIRequest = -12;
+		static constexpr MKL_INT InfiniteCycleRCIRequest = -11;
+		static constexpr MKL_INT DividedByZeroRCIRequest = -10;
+		static constexpr MKL_INT HitIterationLimitWithoutConvergenceRCIRequest = -1;
+		static constexpr MKL_INT SuccessRCIRequest = 0;
+		static constexpr MKL_INT MultiplyMatrixRCIRequest = 1;
+		static constexpr MKL_INT StoppingTestRCIRequest = 2;
+		static constexpr MKL_INT ApplyPreconditionerRCIRequest = 3;
+		static constexpr MKL_INT CheckNormRCIRequest = 4;
 
-		using IntParametersType = std::array<int, 128>;
+		using IntParametersType = std::array<MKL_INT, 128>;
 		using DoubleParametersType = std::array<double, 128>;
 
-		[[nodiscard]] Vector<double> MakeTempVector(int problemSize) const noexcept
+		[[nodiscard]] Vector<double> MakeTempVector(MKL_INT problemSize) const noexcept
 		{
 			return Vector<double>((2 * restartIterationLimit + 1) * problemSize + restartIterationLimit * (restartIterationLimit + 9) / 2 + 1);
 		}

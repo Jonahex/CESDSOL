@@ -52,3 +52,21 @@ namespace CESDSOL::MKL
 	}																							\
 	AssertE(status == SPARSE_STATUS_SUCCESS, MessageTag::Math,									\
 			Format("{}: {}.", name, MKL::SparseStatusMessages[status]));	
+
+#define MKL_VML_OPERATION(operation, ...)														\
+	if constexpr (std::same_as<ScalarType, f32>)												\
+	{																							\
+		operation(s)(__VA_ARGS__);																\
+	}																							\
+	else if constexpr (std::same_as<ScalarType, f64>)											\
+	{																							\
+		operation(d)(__VA_ARGS__);																\
+	}																							\
+	else if constexpr (std::same_as<ScalarType, c32>)											\
+	{																							\
+		operation(c)(__VA_ARGS__);																\
+	}																							\
+	else if constexpr (std::same_as<ScalarType, c64>)											\
+	{																							\
+		operation(z)(__VA_ARGS__);																\
+	}
