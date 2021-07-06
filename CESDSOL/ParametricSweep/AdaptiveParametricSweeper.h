@@ -78,12 +78,12 @@ namespace CESDSOL
 			ValueType parameter = initialValue, previousParameter = initialValue;
 			Vector<ValueType> previousSolution, tmp;
 			size_t solutionIndex = 0;
-			size_t branch = 0;
+			ptrdiff_t branch = initialBranch;
 			bool isChangingBranch = false;
 			ValueType changeBranchStep = 1;
 			size_t changeBranchTrial = 0;
 
-			this->problem->SetTag(Format("branch={}", initialBranch + branch));
+			this->problem->SetTag(Format("branch={}", branch));
 
 			if (interpolateInitialGuess)
 			{
@@ -94,7 +94,7 @@ namespace CESDSOL
 			while (true)
 			{
 				Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::ParametricSweeper,
-					Format("Starting solution with {} = {} on branch {}.", parameterName, parameter, branch + 1));
+					Format("Starting solution with {} = {} on branch {}.", parameterName, parameter, branch));
 
 				this->problem->SetParameter(parameterIndex, parameter);
 				this->ApplyActions(AdaptiveParametricSweeperEvent::StartSolution, *this->problem);
@@ -109,17 +109,10 @@ namespace CESDSOL
 						this->ApplyActions(AdaptiveParametricSweeperEvent::FailedBranchChangeAttempt, *this->problem);
 
 						changeBranchStep *= growthFactor;
+						currentStep *= growthFactor;
 						changeBranchTrial++;
 						this->problem->SetVariables(previousSolution);
-						previousSolution = tmp;
-						if (interpolateInitialGuess)
-						{
-							AXPBY(-changeBranchStep, previousSolution, 1 + changeBranchStep, this->problem->GetVariables().Flatten());
-							this->problem->SetVariablesUpdated();
-						}
-						oldStep = currentStep;
-						currentStep *= growthFactor;
-						parameter = previousParameter + currentStep;
+						AXPBY(-changeBranchStep, tmp, 1 + changeBranchStep, this->problem->GetVariables().Flatten());
 					}
 					else
 					{
@@ -133,7 +126,7 @@ namespace CESDSOL
 							{
 								Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::ParametricSweeper,
 									Format("Parametric sweep stopped at {} = {} on branch {} due to step underflow.", 
-										parameterName, parameter, branch + 1));
+										parameterName, parameter, branch));
 								break;
 							}
 							else
@@ -147,22 +140,16 @@ namespace CESDSOL
 
 								isChangingBranch = true;
 								this->problem->SetVariables(previousSolution);
-								previousSolution = tmp;
-								if (interpolateInitialGuess)
-								{
-									AXPBY(-changeBranchStep, previousSolution, 1 + changeBranchStep, this->problem->GetVariables().Flatten());
-									this->problem->SetVariablesUpdated();
-								}
-								oldStep = currentStep;
+								AXPBY(-changeBranchStep, tmp, 1 + changeBranchStep, this->problem->GetVariables().Flatten());
 								currentStep *= -1;
-								parameter = previousParameter + currentStep;
+								parameter = previousParameter;
 							}
 						}
 						else
 						{
 							Logger::Log(MessageType::Info, MessagePriority::Medium, MessageTag::ParametricSweeper,
 								Format("Parametric sweep is decreasing step at {} = {} on branch {} due to solver failure.",
-									parameterName, parameter, branch + 1));
+									parameterName, parameter, branch));
 
 							this->problem->SetVariables(previousSolution);
 							parameter = previousParameter;
@@ -174,24 +161,28 @@ namespace CESDSOL
 					solutionIndex++;
 					if (isChangingBranch)
 					{
-						branch++;
+						branch += (isIncreasingBranchIndex ? 1 : -1);
+						changeBranchStep = 1;
+						changeBranchTrial = 0;
+						isChangingBranch = false;
+						this->problem->SetTag(Format("branch={}", branch));
 					}
 					oldStep = currentStep;
 					currentStep = currentStep / std::abs(currentStep) * std::min(std::abs(currentStep * growthFactor), maxStep);
 					this->ApplyActions(AdaptiveParametricSweeperEvent::SuccessfulSolution, *this->problem);
 
-					if (limitBranchCount && branch > maxBranchCount)
+					if (limitBranchCount && std::abs(initialBranch - branch) > maxBranchCount)
 					{
 						Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::ParametricSweeper,
 							Format("Parametric sweep finished not reaching target paramter value at {} = {} on branch {} due to reaching maximum branch count.",
-								parameterName, parameter, branch + 1));
+								parameterName, parameter, branch));
 						break;
 					}
 					if (limitSolutionCount && solutionIndex > maxSolutionCount)
 					{
 						Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::ParametricSweeper,
 							Format("Parametric sweep finished not reaching target parameter value at {} = {} on branch {} due to reaching maximum solution count.",
-								parameterName, parameter, branch + 1));
+								parameterName, parameter, branch));
 						break;
 					}
 
@@ -200,12 +191,9 @@ namespace CESDSOL
 
 					if (isChangingBranch)
 					{
-						changeBranchStep = 1;
-						changeBranchTrial = 0;
 						isChangingBranch = false;
-						this->problem->SetTag(Format("branch={}", initialBranch + branch));
 					}
-					else if (interpolateInitialGuess)
+					if (interpolateInitialGuess)
 					{
 						AXPBY(-currentStep / oldStep, tmp, (oldStep + currentStep) / oldStep, this->problem->GetVariables().Flatten());
 						this->problem->SetVariablesUpdated();
@@ -220,8 +208,7 @@ namespace CESDSOL
 				if (!isChangingBranch)
 				{
 					previousParameter = parameter;
-					const bool isFinal = (finalValue - parameter) * (finalValue - parameter - currentStep) < 0;
-					if (isFinal)
+					if (const bool isFinal = (finalValue - parameter) * (finalValue - parameter - currentStep) < 0)
 					{
 						currentStep = finalValue - parameter;
 					}
@@ -250,5 +237,6 @@ namespace CESDSOL
 		MakeProperty(limitSolutionCount, LimitSolutionCount, bool, true);
 		MakeProperty(maxSolutionCount, MaxSolutionCount, size_t, 1000);
 		MakeProperty(initialBranch, InitialBranch, ptrdiff_t, 1);
+		MakeProperty(isIncreasingBranchIndex, IsIncreasingBranchIndex, bool, true);
 	};
 }

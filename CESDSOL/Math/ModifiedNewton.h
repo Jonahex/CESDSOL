@@ -41,13 +41,14 @@ namespace CESDSOL
 		MakeProperty(exitConditions, ExitConditions, MNExitConditions, MNExitConditions::MeritGoalReached
 			| MNExitConditions::SolutionStagnation
 			| MNExitConditions::MeritStagnation
-			| MNExitConditions::IterationCount)
+			| MNExitConditions::IterationCount
+			| MNExitConditions::MeritIncrease)
 		MakeProperty(meritGoal, MeritGoal, double, 1e-8)
 		MakeProperty(iterationLimit, IterationLimit, size_t, 100)
 		MakeProperty(maxMerit, MaximumMerit, double, 1e10)
 		MakeProperty(solutionTolerance, SolutionTolerance, double, 1e-10)
 		MakeProperty(meritTolerance, MeritTolerance, double, 1e-10)
-		MakeProperty(increaseFactor, IncreaseFactor, double, 2)
+		MakeProperty(meritIncreaseFactor, MeritIncreaseFactor, double, 1)
 		MakeProperty(dampring, Damping, double, 1)
 
 		struct OutputInfo final : NonlinearSolver<ProblemType>::OutputInfo
@@ -118,7 +119,7 @@ namespace CESDSOL
 				}
 				if (iterationCount > 0)
 				{
-					if (exitConditions & MNExitConditions::MeritIncrease && merit > increaseFactor * oldMerit)
+					if (exitConditions & MNExitConditions::MeritIncrease && merit > meritIncreaseFactor * oldMerit)
 					{
 						Logger::Log(MessageType::Warning, MessagePriority::High, MessageTag::NonlinearSolver,
 							Format("Stopping modified Newton solution on {} iteration due to merit increased {} times since last iteration.\n", iterationCount + 1, merit / oldMerit));
