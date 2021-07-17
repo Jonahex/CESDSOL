@@ -307,12 +307,10 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                 region = 0
                             ];
                             ceqIndex = #2[[1]] - 1;
-                            fieldDers = Simplify[D[eq, # @@ coords], 
-                                Trig -> False]& /@ fields;
-                            varDers = Simplify[D[eq, #], Trig -> False
-                                ]& /@ vars;
+                            fieldDers = Simplify[D[eq, # @@ coords], Trig->False, TimeConstraint->0.001]& /@ fields;
+                            varDers = Simplify[D[eq, #], Trig->False, TimeConstraint->0.001]& /@ vars;
                             derDers = Simplify[D[eq, ((Derivative @@ 
-                                #[[2]]) @@ {#[[1]]}) @@ coords], Trig -> False]& /@ fieldDerivatives;
+                                #[[2]]) @@ {#[[1]]}) @@ coords], Trig->False, TimeConstraint->0.001]& /@ fieldDerivatives;
                                 
                             StringJoin[
                                 MapIndexed[
@@ -383,7 +381,7 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                 region = 0
                             ];
                             deqIndex = ceqsCount + #2[[1]] - 1;
-                            varDers = Simplify[D[eq, #]]& /@ vars;
+                            varDers = Simplify[D[eq, #], Trig->False, TimeConstraint->0.001]& /@ vars;
                             StringJoin[
                                 MapIndexed[
                                     If[!SameQ[#1, 0],

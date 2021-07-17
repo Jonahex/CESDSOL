@@ -458,7 +458,7 @@ namespace CESDSOL
 			isActualOnParameters = false;
 		}
 
-		[[nodiscard]] FieldType GetParameter(size_t parameterIndex) noexcept
+		[[nodiscard]] FieldType GetParameter(size_t parameterIndex) const noexcept
 		{
 			return parameters[parameterIndex];
 		}
@@ -492,6 +492,16 @@ namespace CESDSOL
 			return variables[variableIndex];
 		}
 
+		[[nodiscard]] auto& GetVariable(size_t variableIndex) noexcept
+		{
+			return variables[variableIndex];
+		}
+
+		[[nodiscard]] const TwoLevelArray<FieldType>& GetVariables() const noexcept
+		{
+			return variables;
+		}
+
 		[[nodiscard]] TwoLevelArray<FieldType>& GetVariables() noexcept
 		{
 			return variables;
@@ -501,6 +511,16 @@ namespace CESDSOL
 		{
 			Actualize();
 			return equations;
+		}
+
+		[[nodiscard]] const auto& GetDerivative(size_t fieldIndex, size_t derivativeIndex) const noexcept
+		{
+			return derivatives[fieldIndex][derivativeIndex];
+		}
+
+		[[nodiscard]] FieldType GetDerivative(size_t fieldIndex, size_t derivativeIndex, size_t pointIndex) const noexcept
+		{
+			return derivatives[fieldIndex][derivativeIndex][pointIndex];
 		}
 
 		void AddLocalOutputExpression(std::function<FieldType(const CurrentLocalValues&, const CurrentGlobalValues&)> expression, const std::string& name = std::string{}) noexcept

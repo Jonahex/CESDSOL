@@ -15,11 +15,11 @@
 #include <math.h>
 
 #define MakeFlag(type) \
-	type operator|(type left, type right) \
+	type inline operator|(type left, type right) \
 	{ \
 		return static_cast<type>(static_cast<size_t>(left) | static_cast<size_t>(right)); \
 	} \
-	bool operator&(type left, type right) \
+	bool inline operator&(type left, type right) \
 	{ \
 		return static_cast<bool>(static_cast<size_t>(left) & static_cast<size_t>(right)); \
 	}
@@ -104,14 +104,17 @@ struct std::formatter<CESDSOL::NiceFloat<FloatType>, CharType>
 		{
 			formatted = "0";
 		}
-		const auto power = static_cast<int>(std::floor(std::log10(std::abs(fp.value))));
-		if (power < 4 && power > -4)
-		{
-			formatted = std::format("{:.4f}", fp.value);
-		}
 		else
 		{
-			formatted = std::format("{:.4f}e{}", fp.value / std::pow(10, power), power);
+			const auto power = static_cast<int>(std::floor(std::log10(std::abs(fp.value))));
+			if (power < 4 && power > -4)
+			{
+				formatted = std::format("{:.4f}", fp.value);
+			}
+			else
+			{
+				formatted = std::format("{:.4f}e{}", fp.value / std::pow(10, power), power);
+			}
 		}
 		ctx.advance_to(std::copy(formatted.begin(), formatted.end(), ctx.out()));
 		return ctx.out();

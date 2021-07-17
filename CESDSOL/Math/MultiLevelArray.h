@@ -203,7 +203,7 @@ namespace CESDSOL
 		}
 	}
 
-	template<typename ScalarType, size_t LevelCount, typename TransformType>
+	template<typename ScalarType, size_t LevelCount>
 	[[nodiscard]] MultiLevelArray<ScalarType, LevelCount> MimicStructure(const MultiLevelArray<ScalarType, LevelCount>& source) noexcept
 	{
 		return MultiLevelArray<ScalarType, LevelCount>(ApproximateStructure(source));
