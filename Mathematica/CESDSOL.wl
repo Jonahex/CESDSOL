@@ -242,7 +242,7 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
              <> ToString[#2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return "
              <> StringReplace[Private`ToCpp[#1], rules] <> ";});\n"&, localVDEExprs
             ], MapIndexed["descriptor.SetGlobalVariableDependentExpression(" <> ToString[
-            #2[[1]] - 1] <> ", [](const auto& g) {return " <> StringReplace[Private`ToCpp[
+            #2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return " <> StringReplace[Private`ToCpp[
             #1], rules] <> ";});\n"&, globalVDEExprs], MapIndexed["descriptor.SetIntegrand("
              <> ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> StringReplace[
             Private`ToCpp[#1], rules] <> ";});\n"&, integralExprs]];
@@ -271,7 +271,7 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                 ]
             ];
         result = StringJoin[result, MapIndexed["descriptor.SetDiscreteEquation("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& globals) {return " <> 
+             <> ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> 
             StringReplace[Private`ToCpp[#1], rules] <> ";});\n"&, deqs]];
         If[needsJacobian,
             result = StringJoin[result, "descriptor.SetLocalVariableDependentExpressionJacobianComponent("
@@ -604,7 +604,7 @@ ExplicitTransientProblem[ceqsRaw_, time_, spatialCoords_, grid_, opts
                 ]
             ];
         result = StringJoin[result, MapIndexed["descriptor.SetDiscreteEquation("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& globals) {return " <> 
+             <> ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> 
             StringReplace[Private`ToCpp[#1], rules] <> ";});\n"&, deqs]];
         If[StringQ[grid],
             gridName = grid
