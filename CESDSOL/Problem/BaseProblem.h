@@ -276,7 +276,7 @@ namespace CESDSOL
 			{
 				for (size_t j = 0; j < descriptor.DerivativeOperatorCount(i); j++)
 				{
-					Multiply(differentiationWeights[fieldDerivativeOperatorMap[i][j]], variables[i], derivatives[i][j]);
+					MVMultiply(differentiationWeights[fieldDerivativeOperatorMap[i][j]], variables[i], derivatives[i][j]);
 				}
 			}
 		}

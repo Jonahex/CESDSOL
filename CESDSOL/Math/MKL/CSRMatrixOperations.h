@@ -6,8 +6,8 @@
 
 namespace CESDSOL
 {
-	template<MKL::MKLCSRMatrix MatrixType, Concepts::Vector VectorType, typename ScalarType = f64>
-	void Multiply(const MatrixType& A, const VectorType& x, VectorType& y, ScalarType alpha = 1., ScalarType beta = 0.)
+	template<MKL::MKLCSRMatrix MatrixType, Concepts::Vector XVectorType, Concepts::Vector YVectorType, typename ScalarType = f64>
+	void MVMultiply(const MatrixType& A, const XVectorType& x, YVectorType& y, ScalarType alpha = 1., ScalarType beta = 0.)
 	{
 		AssertE(A.ColumnCount() == x.size(), MessageTag::Math, "Trying to multiply matrix and vector with incompatible sizes.");
 		AssertE(x.size() == y.size(), MessageTag::Math, "Trying to assign vectors with incompatible sizes.");
@@ -19,12 +19,12 @@ namespace CESDSOL
 	}
 
 	template<MKL::MKLCSRMatrix MatrixType, Concepts::Vector VectorType, typename ScalarType = f64>
-	VectorType Multiply(const MatrixType& A, const VectorType& x, ScalarType alpha = 1.)
+	auto MVMultiply(const MatrixType& A, const VectorType& x, ScalarType alpha = 1.)
 	{
 		AssertE(A.ColumnCount() == x.size(), MessageTag::Math, "Trying to multiply matrix and vector with incompatible sizes.");
 
-		auto y = VectorType(A.RowCount());
-		Multiply(A, x, y, alpha);
+		auto y = Vector<ScalarType>(A.RowCount());
+		MVMultiply(A, x, y, alpha);
 		return y;
 	}
 

@@ -68,7 +68,7 @@ namespace CESDSOL::MKL
 				{
 					const std::span inSpan(tmp.data() + intParameters[21] - 1, size);
 					std::span outSpan(tmp.data() + intParameters[22] - 1, size);
-					Multiply(matrix, inSpan, outSpan, 1., 0.);
+					MVMultiply(matrix, inSpan, outSpan, 1., 0.);
 					continue;
 				}
 				if (rciRequest == ApplyPreconditionerRCIRequest)

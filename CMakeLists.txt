@@ -36,7 +36,6 @@ if (CMAKE_CXX_COMPILER_ID STREQUAL "MSVC")
 endif()
 
 if (MathBackend STREQUAL "MKLMath")
-	set(MKL_THREAD_LAYER "Intel OpenMP")
 	find_package(MKL)	
 	target_link_libraries(CESDSOL PRIVATE MKL::MKL)	
 endif()
