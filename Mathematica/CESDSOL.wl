@@ -85,7 +85,7 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
         params = OptionValue[Parameters];
         paramsCount = Length[params];
         deqsRaw = OptionValue[DiscreteEquations];
-        deqsCount = Length[deqs];
+        deqsCount = Length[deqsRaw];
         vars = OptionValue[Variables];
         varsCount = Length[vars];
         regionCount = 2 dim + 1;
@@ -244,7 +244,7 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
             ], MapIndexed["descriptor.SetGlobalVariableDependentExpression(" <> ToString[
             #2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return " <> StringReplace[Private`ToCpp[
             #1], rules] <> ";});\n"&, globalVDEExprs], MapIndexed["descriptor.SetIntegrand("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> StringReplace[
+             <> ToString[#2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return " <> StringReplace[
             Private`ToCpp[#1], rules] <> ";});\n"&, integralExprs]];
         result =
             StringJoin[
@@ -577,7 +577,7 @@ ExplicitTransientProblem[ceqsRaw_, time_, spatialCoords_, grid_, opts
             ], MapIndexed["descriptor.SetGlobalVariableDependentExpression(" <> ToString[
             #2[[1]] - 1] <> ", [](const auto& g) {return " <> StringReplace[Private`ToCpp[
             #1], rules] <> ";});\n"&, globalVDEExprs], MapIndexed["descriptor.SetIntegrand("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> StringReplace[
+             <> ToString[#2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return " <> StringReplace[
             Private`ToCpp[#1], rules] <> ";});\n"&, integralExprs]];
         result =
             StringJoin[
