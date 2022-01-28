@@ -37,8 +37,8 @@ endif()
 
 if (MathBackend STREQUAL "MKLMath")
 	set(MKL_THREAD_LAYER "Intel OpenMP")
-	find_package(MKL REQUIRED PATHS cmake/)
-	target_link_libraries(CESDSOL PRIVATE MKL::Static)	
+	find_package(MKL)	
+	target_link_libraries(CESDSOL PRIVATE MKL::MKL)	
 endif()
 
 target_include_directories(CESDSOL PRIVATE ${SourcesPath})
