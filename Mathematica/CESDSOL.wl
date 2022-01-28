@@ -153,19 +153,19 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                 ,
                 (Private`ToCpp[D[(#[[1, 1]]) @@ coords /. lvdeRules, 
                     #[[1, 2]]]] -> "l.LVDEJacobianComponentValues[" <> ToString[Position[
-                    localVDEs, #[[1, 1]]][[1, 1]] - 1] <> ", " <> ToString[(#[[1, 2]] /. 
-                    jacobianDerivators)[[1]]] <> ", " <> ToString[(#[[1, 2]] /. jacobianDerivators
+                    localVDEs, #[[1, 1]]][[1, 1]] - 1] <> "][" <> ToString[(#[[1, 2]] /. 
+                    jacobianDerivators)[[1]]] <> "][" <> ToString[(#[[1, 2]] /. jacobianDerivators
                     )[[2]]] <> "]")& /@ lvdeJacobian
                 ,
                 (Private`ToCpp[D[(#[[1, 1]]) /. integralRules, #[[1, 
                     2]]]] -> "l.ReductionJacobianComponentValues[" <> ToString[Position[integrals,
-                     #[[1, 1]]][[1, 1]] - 1] <> ", " <> ToString[(#[[1, 2]] /. jacobianDerivators
-                    )[[1]]] <> ", " <> ToString[(#[[1, 2]] /. jacobianDerivators)[[2]]] <>
+                     #[[1, 1]]][[1, 1]] - 1] <> "][" <> ToString[(#[[1, 2]] /. jacobianDerivators
+                    )[[1]]] <> "][" <> ToString[(#[[1, 2]] /. jacobianDerivators)[[2]]] <>
                      "]")& /@ integralJacobian
                 ,
                 (Private`ToCpp[D[#[[1, 1]] /. gvdeRules, #[[1, 2]]]] 
                     -> "g.GVDEJacobianComponentValues[" <> ToString[Position[globalVDEs, 
-                    #[[1, 1]]][[1, 1]] - 1] <> ", " <> ToString[ceqsCount + Position[vars,
+                    #[[1, 1]]][[1, 1]] - 1] <> "][" <> ToString[ceqsCount + Position[vars,
                      #[[1, 2]]][[1, 1]] - 1] <> "]")& /@ gvdeJacobian
                 ,
                 MapIndexed[(Private`WordPattern[#1] -> "l.Point[" <> 
