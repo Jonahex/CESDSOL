@@ -38,3 +38,7 @@
 #include "Math/MKL/ILUT.h"
 #include "Math/MKL/PARDISO.h"
 #endif
+
+#ifdef UseHYPRE
+#include "Math/HYPRE/BiCGSTAB.h"
+#endif

@@ -1,17 +1,17 @@
 #pragma once
 
 #include "Math/LinearAlgebra.h"
-#include "Math/Preconditioner.h"
+#include "Math/MKL/ILUPreconditioner.h"
 
 namespace CESDSOL::MKL
 {
 	class ILUT final
-		: public Preconditioner<CESDSOL::CSRMatrix<double>>
+		: public ILUPreconditioner<CESDSOL::CSRMatrix<double>, Vector<double>>
 	{
 	public:
 		ILUT() noexcept;
 
-		uptr<OutputInfo> Apply(CSRMatrix<double>& matrix) const noexcept override;
+		bool Setup(const CESDSOL::CSRMatrix<double>& matrix, const Vector<double>& y) noexcept override;
 
 		void SetNormalizeZeroDiagonal(bool value) noexcept;
 		void SetZeroDiagonalNormalizer(double value) noexcept;

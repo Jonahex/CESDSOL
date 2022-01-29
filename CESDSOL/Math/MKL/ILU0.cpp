@@ -2,7 +2,7 @@
 
 namespace CESDSOL::MKL
 {
-	uptr<ILU0::OutputInfo> ILU0::Apply(CSRMatrix<double>& matrix) const noexcept
+	bool ILU0::Setup(const CESDSOL::CSRMatrix<double>& matrix, const Vector<double>& y) noexcept
 	{
 		const MKL_INT size = matrix.RowCount();
 		MKL_INT error;
@@ -13,10 +13,12 @@ namespace CESDSOL::MKL
 		switch (error)
 		{
 			case 0:
-				matrix.ReplaceValues(preconditioner);
+				ILUPreconditioner::Setup(matrix, y);
+				this->preconditionedMatrix = matrix;
+				this->preconditionedMatrix.ReplaceValues(preconditioner);
 				Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::Preconditioner, 
 					"ILU0 preconditioner was successfully calculated.");
-				return std::make_unique<OutputInfo>(true);
+				return true;
 
 			case -101:
 				Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::Preconditioner,
@@ -43,7 +45,7 @@ namespace CESDSOL::MKL
 					"Error in ILU0 preconditioner calculation: matrix column indices are not in the ascending order.");
 				break;
 		}
-		return std::make_unique<OutputInfo>(false);
+		return false;
 	}
 
 	ILU0::ILU0() noexcept

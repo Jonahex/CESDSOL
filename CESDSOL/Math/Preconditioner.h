@@ -1,19 +1,16 @@
 #pragma once
 
-#include "Utils/Aliases.h"
+#include "Math/LinearSolver.h"
 
 namespace CESDSOL
 {
-	template<typename MatrixType>
-	class Preconditioner
+	template<typename MatrixType, typename VectorType>
+	class Preconditioner : public LinearSolver<MatrixType, VectorType>
 	{
 	public:
-		struct OutputInfo
+		virtual bool Setup(const MatrixType& matrix, const VectorType& y) noexcept 
 		{
-			bool success = true;
+			return true;
 		};
-
-		virtual uptr<OutputInfo> Apply(MatrixType& matrix) const noexcept = 0;
-		virtual ~Preconditioner() = default;
 	};
 }

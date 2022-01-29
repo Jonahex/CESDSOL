@@ -116,4 +116,17 @@ namespace CESDSOL
 		LinearAlgebra::Multiply(left.data(), right.data(), result.data(), left.size());
 		return result;
 	}
+
+	template<Concepts::Vector AVectorType, Concepts::Vector BVectorType>
+	[[nodiscard]] auto DotProduct(const AVectorType& a, const BVectorType& b) noexcept
+	{
+		AssertE(a.size() == b.size(), MessageTag::Math, "Trying to find dot product of vectors of unequal size.");
+		return LinearAlgebra::DotProduct(a.data(), b.data(), a.size());
+	}
+
+	template<Concepts::Vector VectorType, typename ScalarType>
+	void Fill(VectorType& vector, ScalarType value) noexcept
+	{
+		return LinearAlgebra::Fill(vector.data(), vector.size(), value);
+	}
 }

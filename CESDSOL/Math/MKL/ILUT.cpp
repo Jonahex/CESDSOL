@@ -4,15 +4,16 @@
 
 namespace CESDSOL::MKL
 {
-	uptr<ILUT::OutputInfo> ILUT::Apply(CSRMatrix<double>& matrix) const noexcept
+	bool ILUT::Setup(const CESDSOL::CSRMatrix<double>& matrix, const Vector<double>& y) noexcept
 	{
 		const MKL_INT size = matrix.RowCount();
 		MKL_INT error;
 		const size_t newNonzeroCount = (2 * maxfil + 1) * size - maxfil * (maxfil + 1) + 1;
-		CSRMatrix<double> preconditioned(size, size, newNonzeroCount);
+		this->preconditionedMatrix = CSRMatrix<double>(size, size, newNonzeroCount);
 		
 		dcsrilut(&size, matrix.GetValues().data(), matrix.GetRowCounts().data(), matrix.GetColumnIndices().data(),
-			preconditioned.GetValues().data(), preconditioned.GetRowCounts().data(), preconditioned.GetColumnIndices().data(), 
+			this->preconditionedMatrix.GetValues().data(), this->preconditionedMatrix.GetRowCounts().data(), 
+			this->preconditionedMatrix.GetColumnIndices().data(),
 			&tolerance, &maxfil, intParameters.data(), doubleParameters.data(), &error);
 
 		switch (error)
@@ -22,10 +23,10 @@ namespace CESDSOL::MKL
 		case 102:
 		case 103:
 		case 104:
-			matrix = preconditioned;
+			ILUPreconditioner::Setup(matrix, y);
 			Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::Preconditioner,
 				"ILUT preconditioner was successfully calculated.");
-			return std::make_unique<OutputInfo>(true);
+			return true;
 
 		case -101:
 			Logger::Log(MessageType::Info, MessagePriority::High, MessageTag::Preconditioner,
@@ -57,7 +58,7 @@ namespace CESDSOL::MKL
 				"Error in ILU0 preconditioner calculation: CSR matrix contains invalid column index.");
 			break;
 		}
-		return std::make_unique<OutputInfo>(false);
+		return false;
 	}
 
 	ILUT::ILUT() noexcept

@@ -85,4 +85,21 @@ namespace CESDSOL::Native
 			x[i] = a[i] * b[i];
 		}
 	}
+
+	template<typename AScalarType, typename BScalarType>
+	[[nodiscard]] auto DotProduct(const AScalarType* a, const BScalarType* b, size_t count) noexcept
+	{
+		decltype(*a * *b) result = 0;
+		for (size_t i = 0; i < count; ++i)
+		{
+			result += a[i] * b[i];
+		}
+		return result;
+	}
+
+	template<typename SourceScalarType, typename DestinationScalarType>
+	void Fill(DestinationScalarType* destination, size_t count, SourceScalarType value) noexcept
+	{
+		std::fill(destination, destination + count, value);
+	}
 }

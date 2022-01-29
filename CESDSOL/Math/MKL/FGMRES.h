@@ -20,7 +20,7 @@ namespace CESDSOL::MKL
 		: public LinearSolver<MatrixType, Vector<double>>
 	{
 	public:
-		FGMRES(uptr<Preconditioner<MatrixType>> aPreconditioner = nullptr)
+		FGMRES(uptr<Preconditioner<MatrixType, Vector<double>>> aPreconditioner = nullptr)
 			: preconditioner(std::move(aPreconditioner))
 		{}
 		
@@ -47,16 +47,12 @@ namespace CESDSOL::MKL
 				return false;
 			}
 
-			Vector<double> preconditionerTmp;
-			MatrixType preconditionedMatrix;
 			if (preconditioner != nullptr)
 			{
-				preconditionerTmp = Vector<double>(size);
-				preconditionedMatrix = matrix;
-				if (!preconditioner->Apply(preconditionedMatrix)->success)
+				if (!preconditioner->Setup(matrix, y)->success)
 				{
 					Logger::Log(MessageType::Error, MessagePriority::High, MessageTag::LinearSolver,
-						"Failed to calculate preconditioner matrix for FGMRES.");
+						"Failed to setup preconditioner for FGMRES.");
 					return false;
 				}
 			}
@@ -75,8 +71,7 @@ namespace CESDSOL::MKL
 				{
 					const std::span inSpan(tmp.data() + intParameters[21] - 1, size);
 					std::span outSpan(tmp.data() + intParameters[22] - 1, size);
-					TriangularSolve(preconditionedMatrix, inSpan, preconditionerTmp, 1., false);
-					TriangularSolve(preconditionedMatrix, preconditionerTmp, outSpan, 1., true);
+					preconditioner->Solve(matrix, inSpan, outSpan);
 					continue;
 				}
 				if (rciRequest == SuccessRCIRequest)
@@ -128,7 +123,7 @@ namespace CESDSOL::MKL
 			return true;
 		}
 
-		void SetPreconditioner(uptr<Preconditioner<MatrixType>> aPreconditioner) noexcept
+		void SetPreconditioner(uptr<Preconditioner<MatrixType, Vector<double>>> aPreconditioner) noexcept
 		{
 			preconditioner = std::move(aPreconditioner);
 		}
@@ -169,7 +164,7 @@ namespace CESDSOL::MKL
 			doubleParameters[7] = zeroNormTolerance;
 		}
 
-		uptr<Preconditioner<MatrixType>> preconditioner;
+		uptr<Preconditioner<MatrixType, Vector<double>>> preconditioner;
 
 		MakeProperty(exitConditions, ExitConditions, FGMRESExitConditions, FGMRESExitConditions::Everything)
 		MakeProperty(iterationLimit, IterationLimit, size_t, 150)

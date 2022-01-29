@@ -68,6 +68,32 @@ namespace CESDSOL::MKL
 	}
 	using Native::Norm2;
 
+	template<MKLScalar ScalarType>
+	[[nodiscard]] auto DotProduct(const ScalarType* a, const ScalarType* b, size_t count) noexcept
+	{
+		if constexpr (std::is_same_v<ScalarType, f32>)
+		{
+			return cblas_sdot(static_cast<MKL_INT>(count), a, 1, b, 1);
+		}
+		else if constexpr (std::is_same_v<ScalarType, f64>)
+		{
+			return cblas_ddot(static_cast<MKL_INT>(count), a, 1, b, 1);
+		}
+		else if constexpr (std::is_same_v<ScalarType, c32>)
+		{
+			c32 result;
+			cblas_cdotu_sub(static_cast<MKL_INT>(count), a, 1, b, 1, &result);
+			return result;
+		}
+		else if constexpr (std::is_same_v<ScalarType, c64>)
+		{
+			c64 result;
+			cblas_ddotu_sub(static_cast<MKL_INT>(count), a, 1, b, 1, &result);
+			return result;
+		}
+	}
+	using Native::DotProduct;
+
 	template<typename ScalarType>
 	void Add(const ScalarType* a, const ScalarType* b, ScalarType* x, size_t count) noexcept
 	{
@@ -94,4 +120,6 @@ namespace CESDSOL::MKL
 #undef MUL_OPERATION
 	}
 	using Native::Multiply;
+
+	using Native::Fill;
 }
