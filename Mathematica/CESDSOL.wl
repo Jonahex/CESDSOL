@@ -64,6 +64,26 @@ PrintDiscretization[dim_, CESDSOL`StructuredFiniteDifferenceDiscretization[
          ToString[dim] <> ">>(" <> ToString[stencilSize] <> ")"; 
 
 
+PrepareExpression[expr_,rules_]:=StringReplace[ToCpp[expr], rules];
+
+
+MakeMethodCallLine[obj_,method_,args___]:=StringJoin[obj, ".", method, "(",StringJoin[Riffle[{args},", "]], ");\n"];
+
+
+MakeGLambda[expr_,rules_]:=StringJoin["[](const auto& g) {return ",PrepareExpression[expr, rules],";}"];
+
+
+MakeLGLambda[expr_,rules_]:=StringJoin["[](const auto& l, const auto& g) {return ",PrepareExpression[expr, rules],";}"];
+
+
+MakeJacobianComponentLine[eqIndex_, varIndex_, derIndex_, region_, expr_,
+     rules_] :=MakeMethodCallLine["descriptor", "SetJacobianComponent", ToString[eqIndex],ToString[varIndex],ToString[derIndex],ToString[
+        region],MakeLGLambda[expr, rules]];
+
+
+MakeVariableConstructionLine[type_, varName_, type_, args___]:=StringJoin[type, " ", varName, " = ", type, "(",StringJoin[Riffle[{args},", "]], ");\n"];
+
+
 End[]; 
 
 
@@ -210,42 +230,39 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                          "][" <> ToString[derivativeIndex - 1] <> "]"
                 ]& /@ fieldDerivatives
             ];
-        result = "auto descriptor = StationaryProblemDescriptor<" <> 
-            ToString[dim] <> ", double, double>(GridDescriptor<" <> ToString[dim]
-             <> ", double>(" <> ToString[regionCount] <> "), Array<Array<std::array<size_t, "
-             <> ToString[dim] <> ">>>" <> ToString[derivativeOperators] <> ", " <>
-             ToString[ceqsCount] <> ", " <> ToString[paramsCount] <> ", " <> ToString[
-            deqsCount] <> ", " <> ToString[localPIECount] <> ", " <> ToString[globalPIECount
-            ] <> ", " <> ToString[localVIECount] <> ", " <> ToString[globalVIECount
-            ] <> ", " <> ToString[localVDECount] <> ", " <> ToString[globalVDECount
-            ] <> ", " <> ToString[integralCount] <> ");\n";
+        result = Private`MakeVariableConstructionLine["auto", "descriptor", StringJoin[
+            "StationaryProblemDescriptor<", ToString[dim], ", double, double>"], 
+            StringJoin["GridDescriptor<", ToString[dim], ", double>(", ToString[regionCount
+            ], ")"], StringJoin["Array<Array<std::array<size_t, ", ToString[dim],
+             ">>>", ToString[derivativeOperators]], ToString[ceqsCount], ToString[
+            paramsCount], ToString[deqsCount], ToString[localPIECount], ToString[
+            globalPIECount], ToString[localVIECount], ToString[globalVIECount], ToString[
+            localVDECount], ToString[globalVDECount], ToString[integralCount]];
         If[problemName != "",
-            result = StringJoin[result, "descriptor.SetProblemName(" 
-                <> Private`Quoted[problemName] <> ");\n"]
+            result = Private`MakeMethodCallLine["descriptor", "SetProblemName", Private`Quoted[problemName]]
         ];
-        result = StringJoin[result, MapIndexed["descriptor.SetParameterName("
-             <> ToString[#2[[1]] - 1] <> ", " <> Private`Quoted[ToString[#1]] <> 
-            ");\n"&, params], MapIndexed["descriptor.SetVariableName(" <> ToString[
-            #2[[1]] - 1] <> ", " <> Private`Quoted[ToString[#1]] <> ");\n"&, Join[
-            fields, vars]]];
-        result = StringJoin[result, MapIndexed["descriptor.SetLocalParameterIndependentExpression("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return "
-             <> StringReplace[Private`ToCpp[#1], rules] <> ";});\n"&, localPIEExprs
-            ], MapIndexed["descriptor.SetGlobalParameterIndependentExpression(" <>
-             ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> StringReplace[
-            Private`ToCpp[#1], rules] <> ";});\n"&, globalPIEExprs], MapIndexed["descriptor.SetLocalVariableIndependentExpression("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return "
-             <> StringReplace[Private`ToCpp[#1], rules] <> ";});\n"&, localVIEExprs
-            ], MapIndexed["descriptor.SetGlobalVariableIndependentExpression(" <>
-             ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> StringReplace[
-            Private`ToCpp[#1], rules] <> ";});\n"&, globalVIEExprs], MapIndexed["descriptor.SetLocalVariableDependentExpression("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return "
-             <> StringReplace[Private`ToCpp[#1], rules] <> ";});\n"&, localVDEExprs
-            ], MapIndexed["descriptor.SetGlobalVariableDependentExpression(" <> ToString[
-            #2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return " <> StringReplace[Private`ToCpp[
-            #1], rules] <> ";});\n"&, globalVDEExprs], MapIndexed["descriptor.SetIntegrand("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& l, const auto& g) {return " <> StringReplace[
-            Private`ToCpp[#1], rules] <> ";});\n"&, integralExprs]];
+        result = StringJoin[result, 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetParameterName", ToString[#2[[1]] - 1], 
+                Private`Quoted[ToString[#1]]]&, params], 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetVariableName", ToString[#2[[1]] - 1], 
+                Private`Quoted[ToString[#1]]]&, Join[fields, vars]]
+        ];
+        result = StringJoin[result, 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetLocalParameterIndependentExpression", ToString[#2[[1]] - 1], 
+                Private`MakeLGLambda[#1, rules]]&, localPIEExprs], 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetGlobalParameterIndependentExpression", ToString[#2[[1]] - 1], 
+                Private`MakeGLambda[#1, rules]]&, globalPIEExprs], 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetLocalVariableIndependentExpression", ToString[#2[[1]] - 1], 
+                Private`MakeLGLambda[#1, rules]]&, localVIEExprs], 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetGlobalVariableIndependentExpression", ToString[#2[[1]] - 1], 
+                Private`MakeGLambda[#1, rules]]&, globalVIEExprs], 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetLocalVariableDependentExpression", ToString[#2[[1]] - 1], 
+                Private`MakeLGLambda[#1, rules]]&, localVDEExprs], 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetGlobalVariableDependentExpression", ToString[#2[[1]] - 1], 
+                Private`MakeLGLambda[#1, rules]]&, globalVDEExprs], 
+            MapIndexed[Private`MakeMethodCallLine["descriptor", "SetIntegrand", ToString[#2[[1]] - 1], 
+                Private`MakeLGLambda[#1, rules]]&, integralExprs]
+         ];
         result =
             StringJoin[
                 result
@@ -260,9 +277,8 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                             eq = #1;
                             region = 0
                         ];
-                        "descriptor.SetContinuousEquation(" <> ToString[
-                            #2[[1]] - 1] <> ", " <> ToString[region] <> ", [](const auto& l, const auto& g) {return "
-                             <> StringReplace[Private`ToCpp[eq], rules] <> ";});\n"
+                        Private`MakeMethodCallLine["descriptor", "SetContinuousEquation", ToString[#2[[1]] - 1], ToString[region],
+                        Private`MakeLGLambda[eq, rules]]
                     ]&
                     ,
                     ceqs
@@ -270,9 +286,8 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                     {2}
                 ]
             ];
-        result = StringJoin[result, MapIndexed["descriptor.SetDiscreteEquation("
-             <> ToString[#2[[1]] - 1] <> ", [](const auto& g) {return " <> 
-            StringReplace[Private`ToCpp[#1], rules] <> ";});\n"&, deqs]];
+        result = StringJoin[result, MapIndexed[Private`MakeMethodCallLine["descriptor", "SetDiscreteEquation", ToString[#2[[1]] - 1],
+                        Private`MakeGLambda[#1, rules]]&, deqs]];
         If[needsJacobian,
             result = StringJoin[result, "descriptor.SetLocalVariableDependentExpressionJacobianComponent("
                  <> ToString[Position[localVDEs, #[[1, 1]]][[1, 1]] - 1] <> ", " <> ToString[
@@ -307,20 +322,18 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                 region = 0
                             ];
                             ceqIndex = #2[[1]] - 1;
-                            fieldDers = Simplify[D[eq, # @@ coords], Trig->False, TimeConstraint->0.001]& /@ fields;
-                            varDers = Simplify[D[eq, #], Trig->False, TimeConstraint->0.001]& /@ vars;
+                            fieldDers = Simplify[D[eq, # @@ coords], 
+                                Trig -> False, TimeConstraint -> 0.001]& /@ fields;
+                            varDers = Simplify[D[eq, #], Trig -> False,
+                                 TimeConstraint -> 0.001]& /@ vars;
                             derDers = Simplify[D[eq, ((Derivative @@ 
-                                #[[2]]) @@ {#[[1]]}) @@ coords], Trig->False, TimeConstraint->0.001]& /@ fieldDerivatives;
-                                
-                            
-                            
+                                #[[2]]) @@ {#[[1]]}) @@ coords], Trig -> False, TimeConstraint -> 0.001
+                                ]& /@ fieldDerivatives;
                             StringJoin[
                                 MapIndexed[
                                     If[!SameQ[#1, 0],
-                                        "descriptor.SetJacobianComponent("
-                                             <> ToString[ceqIndex] <> ", " <> ToString[#2[[1]] - 1] <> ", 0, " <>
-                                             ToString[region] <> ", [](const auto& l, const auto& g) {return " <>
-                                             StringReplace[Private`ToCpp[#1], rules] <> ";});\n"
+                                        Private`MakeJacobianComponentLine[
+                                            ceqIndex, #2[[1]] - 1, 0, region, #1, rules]
                                         ,
                                         ""
                                     ]&
@@ -330,10 +343,8 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                 ,
                                 MapIndexed[
                                     If[!SameQ[#1, 0],
-                                        "descriptor.SetJacobianComponent("
-                                             <> ToString[ceqIndex] <> ", " <> ToString[ceqsCount + #2[[1]] - 1] <>
-                                             ", 0, 0, [](const auto& l, const auto& g) {return " <> StringReplace[
-                                            Private`ToCpp[#1], rules] <> ";});\n"
+                                        Private`MakeJacobianComponentLine[
+                                            ceqIndex, ceqsCount + #2[[1]] - 1, 0, 0, #1, rules]
                                         ,
                                         ""
                                     ]&
@@ -348,10 +359,8 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                                  fieldDerivatives[[#2[[1]], 1]]][[1, 1]];
                                             derIndex = Position[derivativeOperators[[
                                                 fieldIndex]], fieldDerivatives[[#2[[1]], 2]]][[1, 1]];
-                                            "descriptor.SetJacobianComponent("
-                                                 <> ToString[ceqIndex] <> ", " <> ToString[fieldIndex - 1] <> ", " <>
-                                                 ToString[derIndex] <> ", " <> ToString[region] <> ", [](const auto& l, const auto& g) {return "
-                                                 <> StringReplace[Private`ToCpp[#1], rules] <> ";});\n"
+                                            Private`MakeJacobianComponentLine[
+                                                ceqIndex, fieldIndex - 1, derIndex, region, #1, rules]
                                             ,
                                             ""
                                         ]
@@ -383,35 +392,36 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                 region = 0
                             ];
                             deqIndex = ceqsCount + #2[[1]] - 1;
-                            fieldDers = Simplify[D[eq, # @@ coords], Trig->False, TimeConstraint->0.001]& /@ fields;
-                            varDers = Simplify[D[eq, #], Trig->False, TimeConstraint->0.001]& /@ vars;
+                            fieldDers = Simplify[D[eq, # @@ coords], 
+                                Trig -> False, TimeConstraint -> 0.001]& /@ fields;
+                            varDers = Simplify[D[eq, #], Trig -> False,
+                                 TimeConstraint -> 0.001]& /@ vars;
                             derDers = Simplify[D[eq, ((Derivative @@ 
-                                #[[2]]) @@ {#[[1]]}) @@ coords], Trig->False, TimeConstraint->0.001]& /@ fieldDerivatives;
+                                #[[2]]) @@ {#[[1]]}) @@ coords], Trig -> False, TimeConstraint -> 0.001
+                                ]& /@ fieldDerivatives;
                             StringJoin[
-                            MapIndexed[
+                                MapIndexed[
                                     If[!SameQ[#1, 0],
-                                        "descriptor.SetJacobianComponent("
-                                             <> ToString[deqIndex] <> ", " <> ToString[#2[[1]] - 1] <> ", 0, " <>
-                                             ToString[region] <> ", [](const auto& l, const auto& g) {return " <>
-                                             StringReplace[Private`ToCpp[#1], rules] <> ";});\n"
+                                        Private`MakeJacobianComponentLine[
+                                            deqIndex, #2[[1]] - 1, 0, region, #1, rules]
                                         ,
                                         ""
                                     ]&
                                     ,
                                     fieldDers
-                                ],
+                                ]
+                                ,
                                 MapIndexed[
                                     If[!SameQ[#1, 0],
-                                        "descriptor.SetJacobianComponent("
-                                             <> ToString[deqIndex] <> ", " <> ToString[ceqsCount + #2[[1]] - 1] <>
-                                             ", 0, 0, [](const auto& l, const auto& g) {return " <> StringReplace[
-                                            Private`ToCpp[#1], rules] <> ";});\n"
+                                        Private`MakeJacobianComponentLine[
+                                            deqIndex, ceqsCount + #2[[1]] - 1, 0, 0, #1, rules]
                                         ,
                                         ""
                                     ]&
                                     ,
                                     varDers
-                                ],
+                                ]
+                                ,
                                 MapIndexed[
                                     Module[{fieldIndex, derIndex},
                                         If[!SameQ[#1, 0],
@@ -419,10 +429,8 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                                  fieldDerivatives[[#2[[1]], 1]]][[1, 1]];
                                             derIndex = Position[derivativeOperators[[
                                                 fieldIndex]], fieldDerivatives[[#2[[1]], 2]]][[1, 1]];
-                                            "descriptor.SetJacobianComponent("
-                                                 <> ToString[deqIndex] <> ", " <> ToString[fieldIndex - 1] <> ", " <>
-                                                 ToString[derIndex] <> ", " <> ToString[region] <> ", [](const auto& l, const auto& g) {return "
-                                                 <> StringReplace[Private`ToCpp[#1], rules] <> ";});\n"
+                                            Private`MakeJacobianComponentLine[
+                                                deqIndex, fieldIndex - 1, derIndex, region, #1, rules]
                                             ,
                                             ""
                                         ]
@@ -455,8 +463,8 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
              <> StringReplace[Private`ToCpp[#[[2]]], rules] <> ";}, " <> Private`Quoted[
             #[[1]]] <> ");\n"& /@ OptionValue[GlobalOutput]];
         result = StringJoin[result, "problem->AddIntegralOutputExpression([](const auto& l, const auto& g){ return "
-             <> StringReplace[Private`ToCpp[#[[2]]], rules] <> ";}, " <> Private`Quoted[#[[
-            1]]] <> ");\n"& /@ OptionValue[IntegralOutput]];
+             <> StringReplace[Private`ToCpp[#[[2]]], rules] <> ";}, " <> Private`Quoted[
+            #[[1]]] <> ");\n"& /@ OptionValue[IntegralOutput]];
         result = StringJoin[result, "problem->AddPointOutputExpression("
              <> ToString[N[#[[2, 1]]]] <> ", [](const auto& l, const auto& g){ return "
              <> StringReplace[Private`ToCpp[#[[2, 2]]], rules] <> ";}, " <> Private`Quoted[
