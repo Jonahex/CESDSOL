@@ -570,7 +570,7 @@ namespace CESDSOL
 								const auto trueRegionIndex = GetTrueRegionIndex(i, j);
 								if (descriptor.HasJacobianComponent(i, k, 0, trueRegionIndex))
 								{
-									jacobianMatrix.SetValue(lastIndex++, jacobian[i][k][0][j]);
+									jacobianMatrix.SetValue(++lastIndex, jacobian[i][k][0][j]);
 								}
 							}
 						}
@@ -651,7 +651,7 @@ namespace CESDSOL
 						for (size_t l = 0; l < jacobianStructure[i][j][k].size(); ++l)
 						{
 							const auto& element = jacobianStructure[i][j][k][l];
-							stream << Format("{} {} {} {}: {} {} {}\n", i, j, k, l, element.Index, element.OperatorIndex, element.Multiplier);
+							stream << std::format("{} {} {} {}: {} {} {}\n", i, j, k, l, element.Index, element.OperatorIndex, element.Multiplier);
 						}
 					}
 				}

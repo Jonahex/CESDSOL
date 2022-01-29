@@ -312,6 +312,8 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                             derDers = Simplify[D[eq, ((Derivative @@ 
                                 #[[2]]) @@ {#[[1]]}) @@ coords], Trig->False, TimeConstraint->0.001]& /@ fieldDerivatives;
                                 
+                            
+                            
                             StringJoin[
                                 MapIndexed[
                                     If[!SameQ[#1, 0],
@@ -381,8 +383,23 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                 region = 0
                             ];
                             deqIndex = ceqsCount + #2[[1]] - 1;
+                            fieldDers = Simplify[D[eq, # @@ coords], Trig->False, TimeConstraint->0.001]& /@ fields;
                             varDers = Simplify[D[eq, #], Trig->False, TimeConstraint->0.001]& /@ vars;
+                            derDers = Simplify[D[eq, ((Derivative @@ 
+                                #[[2]]) @@ {#[[1]]}) @@ coords], Trig->False, TimeConstraint->0.001]& /@ fieldDerivatives;
                             StringJoin[
+                            MapIndexed[
+                                    If[!SameQ[#1, 0],
+                                        "descriptor.SetJacobianComponent("
+                                             <> ToString[deqIndex] <> ", " <> ToString[#2[[1]] - 1] <> ", 0, " <>
+                                             ToString[region] <> ", [](const auto& l, const auto& g) {return " <>
+                                             StringReplace[Private`ToCpp[#1], rules] <> ";});\n"
+                                        ,
+                                        ""
+                                    ]&
+                                    ,
+                                    fieldDers
+                                ],
                                 MapIndexed[
                                     If[!SameQ[#1, 0],
                                         "descriptor.SetJacobianComponent("
@@ -394,6 +411,24 @@ StationaryProblem[ceqsRaw_, fields_, coords_, grid_, opts:OptionsPattern[
                                     ]&
                                     ,
                                     varDers
+                                ],
+                                MapIndexed[
+                                    Module[{fieldIndex, derIndex},
+                                        If[!SameQ[#1, 0],
+                                            fieldIndex = Position[fields,
+                                                 fieldDerivatives[[#2[[1]], 1]]][[1, 1]];
+                                            derIndex = Position[derivativeOperators[[
+                                                fieldIndex]], fieldDerivatives[[#2[[1]], 2]]][[1, 1]];
+                                            "descriptor.SetJacobianComponent("
+                                                 <> ToString[deqIndex] <> ", " <> ToString[fieldIndex - 1] <> ", " <>
+                                                 ToString[derIndex] <> ", " <> ToString[region] <> ", [](const auto& l, const auto& g) {return "
+                                                 <> StringReplace[Private`ToCpp[#1], rules] <> ";});\n"
+                                            ,
+                                            ""
+                                        ]
+                                    ]&
+                                    ,
+                                    derDers
                                 ]
                             ]
                         ]&
