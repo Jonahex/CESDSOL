@@ -78,13 +78,13 @@ namespace CESDSOL
 	template<typename... Args>
 	[[nodiscard]] std::string Format(std::string_view format, const Args&... args) noexcept
 	{
-		return std::format(format, Nicify(args)...);
+		return std::vformat(format, std::make_format_args(Nicify(args)...));
 	}
 
 	template<typename OutputIt, typename... Args>
 	[[nodiscard]] OutputIt FormatTo(OutputIt out, std::string_view format, const Args&... args) noexcept
 	{
-		return std::format_to(out, format, Nicify(args)...);
+		return std::vformat_to(out, format, std::make_format_args(Nicify(args)...));
 	}
 }
 
